@@ -1,13 +1,14 @@
 package io.github.stevezhang123.gunwood;
 
 import com.mojang.logging.LogUtils;
+import io.github.stevezhang123.gunwood.network.ModNetworking;
+import io.github.stevezhang123.gunwood.paint.PaintedBlockSyncEvents;
+import io.github.stevezhang123.gunwood.registry.ModCreativeTabs;
+import io.github.stevezhang123.gunwood.registry.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -27,7 +28,6 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
@@ -39,7 +39,6 @@ public class Gunwood {
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
     public static final DeferredBlock<Block> EXAMPLE_BLOCK = BLOCKS.registerSimpleBlock("example_block", BlockBehaviour.Properties.of().mapColor(MapColor.STONE));
     public static final DeferredItem<BlockItem> EXAMPLE_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("example_block", EXAMPLE_BLOCK);
@@ -48,25 +47,19 @@ public class Gunwood {
             new Item.Properties().food(new FoodProperties.Builder().alwaysEdible().nutrition(1).saturationModifier(2f).build())
     );
 
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> GUNWOOD_TAB = CREATIVE_MODE_TABS.register(
-            "gunwood_tab",
-            () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.gunwood"))
-                    .withTabsBefore(CreativeModeTabs.COMBAT)
-                    .icon(() -> EXAMPLE_ITEM.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> output.accept(EXAMPLE_ITEM.get()))
-                    .build()
-    );
-
     public Gunwood(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::addCreative);
+        modEventBus.addListener(ModNetworking::registerPayloadHandlers);
 
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
-        CREATIVE_MODE_TABS.register(modEventBus);
+        ModItems.ITEMS.register(modEventBus);
+        ModCreativeTabs.CREATIVE_MODE_TABS.register(modEventBus);
 
         NeoForge.EVENT_BUS.register(this);
+        NeoForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerLoggedIn);
+        NeoForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerChangedDimension);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
