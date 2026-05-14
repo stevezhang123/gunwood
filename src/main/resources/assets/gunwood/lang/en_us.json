@@ -1,5 +1,10 @@
 {
   "itemGroup.gunwood": "Gunwood",
+  "itemGroup.gunwood.gunwood_tab": "Gunwood",
   "block.gunwood.example_block": "Example Block",
-  "item.gunwood.example_item": "Example Item"
+  "item.gunwood.example_item": "Example Item",
+  "item.gunwood.spray_brush": "Spray Brush",
+  "item.gunwood.scraper": "Scraper",
+  "item.gunwood.invisible_paint": "Invisible Paint",
+  "item.gunwood.glasses": "Glasses"
 }
