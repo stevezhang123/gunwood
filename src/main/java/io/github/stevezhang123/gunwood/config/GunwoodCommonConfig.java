@@ -12,6 +12,7 @@ public final class GunwoodCommonConfig {
     public static final ModConfigSpec.IntValue SCRAPER_MAX_DAMAGE;
     public static final ModConfigSpec.IntValue SPRAYER_DAMAGE_PER_USE;
     public static final ModConfigSpec.IntValue SCRAPER_DAMAGE_PER_USE;
+    public static final ModConfigSpec.DoubleValue SCRAPER_AIR_SCRAPE_RANGE;
     public static final ModConfigSpec.BooleanValue USE_UNBREAKING_FOR_SPRAYER_AND_SCRAPER;
     public static final ModConfigSpec.BooleanValue ALLOW_MENDING_ON_SPRAYER_AND_SCRAPER;
     public static final ModConfigSpec.IntValue MAX_SELECTION_VOLUME;
@@ -63,6 +64,14 @@ public final class GunwoodCommonConfig {
                         "Default: 1; Range: 0 ~ 1024"
                 )
                 .defineInRange("scraperDamagePerUse", 1, 0, 1024);
+        SCRAPER_AIR_SCRAPE_RANGE = builder
+                .comment(
+                        "刮子右键空气时沿玩家视线查找透明化坐标的最大距离，单位为方块。用于清除没有实体方块但仍残留的 Gunwood 透明化标记。",
+                        "Maximum distance in blocks for scrapers to search painted positions while right-clicking air. This clears Gunwood paint markers even when no real block remains.",
+                        "默认值：6.0；范围：1.0 ~ 64.0",
+                        "Default: 6.0; Range: 1.0 ~ 64.0"
+                )
+                .defineInRange("scraperAirScrapeRange", 6.0D, 1.0D, 64.0D);
         USE_UNBREAKING_FOR_SPRAYER_AND_SCRAPER = builder
                 .comment(
                         "喷刷和刮子的耐久消耗是否受耐久附魔影响。关闭后，每次成功使用会直接按配置扣除耐久。",

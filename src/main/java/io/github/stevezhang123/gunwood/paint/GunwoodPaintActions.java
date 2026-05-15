@@ -2,9 +2,11 @@ package io.github.stevezhang123.gunwood.paint;
 
 import io.github.stevezhang123.gunwood.network.ModNetworking;
 import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
+import io.github.stevezhang123.gunwood.compat.ftbultimine.GunwoodFTBAirScrapeCompat;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelection;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelectionManager;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.network.chat.Component;
@@ -13,39 +15,36 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
 
 public final class GunwoodPaintActions {
     private GunwoodPaintActions() {
     }
 
     public static int paint(ServerPlayer player, ServerLevel level, BlockPos pos, ItemStack toolStack, InteractionHand hand) {
-        Optional<GunwoodSelection> selection = GunwoodSelectionManager.getSelection(player);
+        Optional<GunwoodSelection> selection = GunwoodSelectionManager.getActiveValidSelectionContaining(player, pos);
         if (GunwoodCommonConfig.ALLOW_SELECTION_BATCH_PAINTING.get() && selection.isPresent()) {
             GunwoodSelection gunwoodSelection = selection.get();
-            if (isSelectionWithinLimit(player, gunwoodSelection)) {
-                return paintSelection(player, level, gunwoodSelection, toolStack, hand);
-            }
-
-            GunwoodSelectionManager.clear(player.getUUID());
+            return paintSelection(player, level, gunwoodSelection, toolStack, hand);
         }
 
         return paintSingle(player, level, pos, toolStack, hand);
     }
 
     public static int scrape(ServerPlayer player, ServerLevel level, BlockPos pos, ItemStack toolStack, InteractionHand hand) {
-        Optional<GunwoodSelection> selection = GunwoodSelectionManager.getSelection(player);
+        Optional<GunwoodSelection> selection = GunwoodSelectionManager.getActiveValidSelectionContaining(player, pos);
         if (GunwoodCommonConfig.ALLOW_SELECTION_BATCH_SCRAPING.get() && selection.isPresent()) {
             GunwoodSelection gunwoodSelection = selection.get();
-            if (isSelectionWithinLimit(player, gunwoodSelection)) {
-                return scrapeSelectionInternal(player, level, gunwoodSelection, toolStack, hand);
-            }
-
-            GunwoodSelectionManager.clear(player.getUUID());
+            return scrapeSelectionInternal(player, level, gunwoodSelection, toolStack, hand);
         }
 
         return scrapeSingle(player, level, pos, toolStack, hand);
@@ -56,18 +55,26 @@ public final class GunwoodPaintActions {
             return 0;
         }
 
-        Optional<GunwoodSelection> selection = GunwoodSelectionManager.getSelection(player);
+        Optional<GunwoodSelection> selection = GunwoodSelectionManager.getActiveValidSelection(player);
         if (selection.isEmpty()) {
             return 0;
         }
 
-        GunwoodSelection gunwoodSelection = selection.get();
-        if (!isSelectionWithinLimit(player, gunwoodSelection)) {
-            GunwoodSelectionManager.clear(player.getUUID());
+        return scrapeSelectionInternal(player, level, selection.get(), toolStack, hand);
+    }
+
+    public static int scrapeAirTarget(ServerPlayer player, ServerLevel level, ItemStack toolStack, InteractionHand hand) {
+        Optional<BlockPos> target = findPaintedPositionInLookDirection(player, level, GunwoodCommonConfig.SCRAPER_AIR_SCRAPE_RANGE.get());
+        if (target.isEmpty()) {
             return 0;
         }
 
-        return scrapeSelectionInternal(player, level, gunwoodSelection, toolStack, hand);
+        if (GunwoodCommonConfig.ENABLE_FTB_ULTIMINE_COMPAT.get() && GunwoodFTBAirScrapeCompat.isUltiminePressed(player)) {
+            List<BlockPos> connected = collectConnectedPaintedPositions(level, target.get(), GunwoodCommonConfig.MAX_FTB_CHAIN_BLOCKS.get());
+            return scrapeMany(player, level, connected, toolStack, hand);
+        }
+
+        return scrapeSingle(player, level, target.get(), toolStack, hand);
     }
 
     public static int paintSingle(ServerPlayer player, ServerLevel level, BlockPos pos, ItemStack toolStack, InteractionHand hand) {
@@ -209,6 +216,52 @@ public final class GunwoodPaintActions {
             return changedPositions;
         }
         return new ArrayList<>(changedPositions.subList(0, limit));
+    }
+
+    private static Optional<BlockPos> findPaintedPositionInLookDirection(ServerPlayer player, ServerLevel level, double range) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0F).normalize();
+        Set<BlockPos> checked = new HashSet<>();
+        double step = 0.2D;
+
+        for (double distance = 0.0D; distance <= range; distance += step) {
+            BlockPos pos = BlockPos.containing(eye.add(look.scale(distance)));
+            if (!checked.add(pos)) {
+                continue;
+            }
+            if (PaintedBlockManager.contains(level, pos)) {
+                return Optional.of(pos.immutable());
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static List<BlockPos> collectConnectedPaintedPositions(ServerLevel level, BlockPos start, int maxBlocks) {
+        List<BlockPos> results = new ArrayList<>();
+        Set<BlockPos> visited = new HashSet<>();
+        Queue<BlockPos> queue = new ArrayDeque<>();
+
+        BlockPos immutableStart = start.immutable();
+        queue.add(immutableStart);
+        visited.add(immutableStart);
+
+        while (!queue.isEmpty() && results.size() < maxBlocks) {
+            BlockPos current = queue.remove();
+            if (!PaintedBlockManager.contains(level, current)) {
+                continue;
+            }
+
+            results.add(current.immutable());
+            for (Direction direction : Direction.values()) {
+                BlockPos next = current.relative(direction).immutable();
+                if (visited.add(next)) {
+                    queue.add(next);
+                }
+            }
+        }
+
+        return results;
     }
 
     private static boolean hasDurabilityForUse(ServerPlayer player, ItemStack toolStack, int damagePerUse) {

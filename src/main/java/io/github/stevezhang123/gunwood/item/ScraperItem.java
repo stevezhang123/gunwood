@@ -50,6 +50,9 @@ public class ScraperItem extends Item {
 
         if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
             int scraped = GunwoodPaintActions.scrapeCurrentSelection(serverPlayer, serverLevel, stack, hand);
+            if (scraped <= 0) {
+                scraped = GunwoodPaintActions.scrapeAirTarget(serverPlayer, serverLevel, stack, hand);
+            }
             if (scraped > 0) {
                 return InteractionResultHolder.success(stack);
             }

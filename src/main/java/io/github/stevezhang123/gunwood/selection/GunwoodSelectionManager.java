@@ -3,7 +3,9 @@ package io.github.stevezhang123.gunwood.selection;
 import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +15,7 @@ import java.util.UUID;
 public final class GunwoodSelectionManager {
     private static final Map<UUID, BlockPos> FIRST_POSITIONS = new HashMap<>();
     private static final Map<UUID, GunwoodSelection> SELECTIONS = new HashMap<>();
+    private static final Map<UUID, ResourceKey<Level>> SELECTION_DIMENSIONS = new HashMap<>();
 
     private GunwoodSelectionManager() {
     }
@@ -25,6 +28,7 @@ public final class GunwoodSelectionManager {
         if (firstPos == null || SELECTIONS.containsKey(playerId)) {
             FIRST_POSITIONS.put(playerId, immutablePos);
             SELECTIONS.remove(playerId);
+            SELECTION_DIMENSIONS.put(playerId, player.level().dimension());
             player.sendSystemMessage(Component.translatable("message.gunwood.selection.first_set"));
             return;
         }
@@ -37,11 +41,33 @@ public final class GunwoodSelectionManager {
 
         FIRST_POSITIONS.put(playerId, firstPos);
         SELECTIONS.put(playerId, selection);
+        SELECTION_DIMENSIONS.put(playerId, player.level().dimension());
         player.sendSystemMessage(Component.translatable("message.gunwood.selection.second_set", selection.volume()));
     }
 
     public static Optional<GunwoodSelection> getSelection(ServerPlayer player) {
         return Optional.ofNullable(SELECTIONS.get(player.getUUID()));
+    }
+
+    public static Optional<GunwoodSelection> getActiveValidSelection(ServerPlayer player) {
+        UUID playerId = player.getUUID();
+        GunwoodSelection selection = SELECTIONS.get(playerId);
+        if (selection == null) {
+            return Optional.empty();
+        }
+
+        ResourceKey<Level> dimension = SELECTION_DIMENSIONS.get(playerId);
+        if (dimension == null || !dimension.equals(player.level().dimension()) || !isSelectionUsable(selection)) {
+            clear(playerId);
+            return Optional.empty();
+        }
+
+        return Optional.of(selection);
+    }
+
+    public static Optional<GunwoodSelection> getActiveValidSelectionContaining(ServerPlayer player, BlockPos pos) {
+        Optional<GunwoodSelection> selection = getActiveValidSelection(player);
+        return selection.filter(gunwoodSelection -> gunwoodSelection.contains(pos));
     }
 
     public static void setSelection(ServerPlayer player, GunwoodSelection selection) {
@@ -54,6 +80,7 @@ public final class GunwoodSelectionManager {
         UUID playerId = player.getUUID();
         FIRST_POSITIONS.put(playerId, selection.firstPos());
         SELECTIONS.put(playerId, selection);
+        SELECTION_DIMENSIONS.put(playerId, player.level().dimension());
     }
 
     public static void clear(ServerPlayer player) {
@@ -64,6 +91,7 @@ public final class GunwoodSelectionManager {
     public static void clear(UUID playerId) {
         FIRST_POSITIONS.remove(playerId);
         SELECTIONS.remove(playerId);
+        SELECTION_DIMENSIONS.remove(playerId);
     }
 
     public static int maxSelectionVolume() {
@@ -72,5 +100,10 @@ public final class GunwoodSelectionManager {
 
     public static int maxAdjustableSelectionVolume() {
         return Math.min(GunwoodCommonConfig.MAX_SELECTION_VOLUME.get(), GunwoodCommonConfig.MAX_BATCH_OPERATION_BLOCKS.get());
+    }
+
+    private static boolean isSelectionUsable(GunwoodSelection selection) {
+        long volume = selection.volume();
+        return volume > 0 && volume <= maxAdjustableSelectionVolume();
     }
 }
