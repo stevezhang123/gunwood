@@ -25,6 +25,11 @@ public final class PaintedBlockManager {
         refreshLight(level, changedPositions);
     }
 
+    public static void addAll(ServerLevel level, Collection<BlockPos> positions) {
+        PaintedBlockSavedData.get(level).addAll(positions);
+        refreshLight(level, positions);
+    }
+
     public static void remove(ServerLevel level, BlockPos pos) {
         if (PaintedBlockSavedData.get(level).remove(pos)) {
             refreshLight(level, pos);
@@ -34,6 +39,11 @@ public final class PaintedBlockManager {
     public static void removeAll(ServerLevel level, Collection<BlockPos> positions) {
         List<BlockPos> changedPositions = PaintedBlockSavedData.get(level).removeAll(positions);
         refreshLight(level, changedPositions);
+    }
+
+    public static void removeAll(ServerLevel level, Collection<BlockPos> positions) {
+        PaintedBlockSavedData.get(level).removeAll(positions);
+        refreshLight(level, positions);
     }
 
     public static boolean contains(ServerLevel level, BlockPos pos) {

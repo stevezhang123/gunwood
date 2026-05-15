@@ -106,6 +106,18 @@ public class PaintedBlockSavedData extends SavedData {
         return changedPositions;
     }
 
+    public void removeAll(Collection<BlockPos> positions) {
+        boolean changed = false;
+
+        for (BlockPos pos : positions) {
+            changed |= this.paintedBlocks.remove(pos.immutable());
+        }
+
+        if (changed) {
+            this.setDirty();
+        }
+    }
+
     public boolean contains(BlockPos pos) {
         return this.paintedBlocks.contains(pos);
     }

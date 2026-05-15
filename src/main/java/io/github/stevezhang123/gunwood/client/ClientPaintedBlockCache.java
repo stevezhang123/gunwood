@@ -67,6 +67,10 @@ public final class ClientPaintedBlockCache {
         }
     }
 
+    public static void addAll(Collection<BlockPos> positions) {
+        positions.forEach(ClientPaintedBlockCache::add);
+    }
+
     public static void remove(BlockPos pos) {
         BlockPos immutablePos = pos.immutable();
         if (PAINTED_BLOCKS.remove(immutablePos)) {
@@ -92,6 +96,10 @@ public final class ClientPaintedBlockCache {
             changedPositions.forEach(pos -> refreshFlywheelVisual(pos, false));
             refreshContraptionVisuals(changedPositions);
         }
+    }
+
+    public static void removeAll(Collection<BlockPos> positions) {
+        positions.forEach(ClientPaintedBlockCache::remove);
     }
 
     public static boolean contains(BlockPos pos) {
