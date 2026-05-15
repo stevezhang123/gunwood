@@ -91,7 +91,7 @@ public final class GunwoodPaintActions {
         PaintedBlockManager.add(level, pos);
         damageTool(player, toolStack, hand, damagePerUse);
         ModNetworking.syncAddedToNearby(level, pos);
-        player.sendSystemMessage(Component.literal("已涂漆：" + pos.getX() + " " + pos.getY() + " " + pos.getZ()));
+        player.sendSystemMessage(Component.translatable("message.gunwood.paint.single_painted", pos.getX(), pos.getY(), pos.getZ()));
         return 1;
     }
 
@@ -109,7 +109,7 @@ public final class GunwoodPaintActions {
         PaintedBlockManager.remove(level, pos);
         damageTool(player, toolStack, hand, damagePerUse);
         ModNetworking.syncRemovedToNearby(level, pos);
-        player.sendSystemMessage(Component.literal("已清除涂漆：" + pos.getX() + " " + pos.getY() + " " + pos.getZ()));
+        player.sendSystemMessage(Component.translatable("message.gunwood.paint.single_scraped", pos.getX(), pos.getY(), pos.getZ()));
         return 1;
     }
 
