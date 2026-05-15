@@ -2,7 +2,7 @@ package io.github.stevezhang123.gunwood.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.stevezhang123.gunwood.client.ClientPaintedBlockVisibility;
+import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.core.BlockPos;
@@ -34,7 +34,7 @@ public abstract class BlockRenderDispatcherMixin {
             RenderType renderType,
             CallbackInfo ci
     ) {
-        if (ClientPaintedBlockVisibility.shouldHideOrdinaryBlockModel(state, pos)) {
+        if (GunwoodClientRenderRules.shouldSkipBlockRender(level, pos, state)) {
             ci.cancel();
         }
     }

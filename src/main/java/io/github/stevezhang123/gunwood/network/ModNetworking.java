@@ -5,8 +5,11 @@ import io.github.stevezhang123.gunwood.network.payload.AddPaintedBlockPayload;
 import io.github.stevezhang123.gunwood.network.payload.AddPaintedBlocksPayload;
 import io.github.stevezhang123.gunwood.network.payload.RemovePaintedBlockPayload;
 import io.github.stevezhang123.gunwood.network.payload.RemovePaintedBlocksPayload;
+import io.github.stevezhang123.gunwood.network.payload.SetSelectionPayload;
 import io.github.stevezhang123.gunwood.network.payload.SyncPaintedBlocksPayload;
 import io.github.stevezhang123.gunwood.paint.PaintedBlockManager;
+import io.github.stevezhang123.gunwood.selection.GunwoodSelection;
+import io.github.stevezhang123.gunwood.selection.GunwoodSelectionManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,6 +55,15 @@ public final class ModNetworking {
                 RemovePaintedBlocksPayload.TYPE,
                 RemovePaintedBlocksPayload.STREAM_CODEC,
                 (payload, context) -> ClientPaintedBlockCache.removeAll(payload.positions())
+        );
+        registrar.playToServer(
+                SetSelectionPayload.TYPE,
+                SetSelectionPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer player) {
+                        GunwoodSelectionManager.setSelection(player, new GunwoodSelection(payload.firstPos(), payload.secondPos()));
+                    }
+                }
         );
     }
 

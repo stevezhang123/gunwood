@@ -5,6 +5,7 @@ import io.github.stevezhang123.gunwood.network.ModNetworking;
 import io.github.stevezhang123.gunwood.paint.PaintedBlockSyncEvents;
 import io.github.stevezhang123.gunwood.registry.ModCreativeTabs;
 import io.github.stevezhang123.gunwood.registry.ModItems;
+import io.github.stevezhang123.gunwood.selection.GunwoodSelectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.food.FoodProperties;
@@ -61,6 +62,9 @@ public class Gunwood {
         NeoForge.EVENT_BUS.register(this);
         NeoForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerChangedDimension);
+        NeoForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerLoggedOut);
+        NeoForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerRespawn);
+        NeoForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerChangedDimension);
         registerOptionalCompat("ftbultimine", "io.github.stevezhang123.gunwood.compat.ftbultimine.GunwoodFTBUltimineCompat");
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }

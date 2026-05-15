@@ -1,6 +1,6 @@
 package io.github.stevezhang123.gunwood.mixin.client;
 
-import io.github.stevezhang123.gunwood.client.ClientPaintedBlockVisibility;
+import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -22,7 +22,8 @@ public abstract class BlockMixin {
             BlockPos pos,
             CallbackInfoReturnable<Boolean> cir
     ) {
-        if (ClientPaintedBlockVisibility.shouldHideOrdinaryBlockModel(level.getBlockState(pos), pos)) {
+        BlockState hiddenNeighborState = level.getBlockState(pos);
+        if (GunwoodClientRenderRules.shouldSkipBlockRender(level, pos, hiddenNeighborState)) {
             cir.setReturnValue(true);
         }
     }

@@ -9,6 +9,8 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class PaintedBlockSavedData extends SavedData {
@@ -56,40 +58,52 @@ public class PaintedBlockSavedData extends SavedData {
         return tag;
     }
 
-    public void add(BlockPos pos) {
+    public boolean add(BlockPos pos) {
         if (this.paintedBlocks.add(pos.immutable())) {
             this.setDirty();
+            return true;
         }
+        return false;
     }
 
-    public void addAll(Collection<BlockPos> positions) {
-        boolean changed = false;
+    public List<BlockPos> addAll(Collection<BlockPos> positions) {
+        List<BlockPos> changedPositions = new ArrayList<>();
 
         for (BlockPos pos : positions) {
-            changed |= this.paintedBlocks.add(pos.immutable());
+            BlockPos immutablePos = pos.immutable();
+            if (this.paintedBlocks.add(immutablePos)) {
+                changedPositions.add(immutablePos);
+            }
         }
 
-        if (changed) {
+        if (!changedPositions.isEmpty()) {
             this.setDirty();
         }
+        return changedPositions;
     }
 
-    public void remove(BlockPos pos) {
+    public boolean remove(BlockPos pos) {
         if (this.paintedBlocks.remove(pos.immutable())) {
             this.setDirty();
+            return true;
         }
+        return false;
     }
 
-    public void removeAll(Collection<BlockPos> positions) {
-        boolean changed = false;
+    public List<BlockPos> removeAll(Collection<BlockPos> positions) {
+        List<BlockPos> changedPositions = new ArrayList<>();
 
         for (BlockPos pos : positions) {
-            changed |= this.paintedBlocks.remove(pos.immutable());
+            BlockPos immutablePos = pos.immutable();
+            if (this.paintedBlocks.remove(immutablePos)) {
+                changedPositions.add(immutablePos);
+            }
         }
 
-        if (changed) {
+        if (!changedPositions.isEmpty()) {
             this.setDirty();
         }
+        return changedPositions;
     }
 
     public boolean contains(BlockPos pos) {

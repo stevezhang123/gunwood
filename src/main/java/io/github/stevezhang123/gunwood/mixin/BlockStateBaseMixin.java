@@ -53,4 +53,11 @@ public abstract class BlockStateBaseMixin {
             cir.setReturnValue(1.0F);
         }
     }
+
+    @Inject(method = "isViewBlocking", at = @At("HEAD"), cancellable = true)
+    private void gunwood$paintedBlocksDoNotBlockView(BlockGetter level, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+        if (PaintedBlockLightTransparency.isPainted(level, pos)) {
+            cir.setReturnValue(false);
+        }
+    }
 }

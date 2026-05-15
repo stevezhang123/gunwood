@@ -3,6 +3,21 @@
   "item.gunwood.spray_brush": "喷刷",
   "item.gunwood.scraper": "刮子",
   "item.gunwood.chunk_scrape_brush": "区块刮刷",
+  "item.gunwood.paint_selector": "选区喷漆工具",
   "item.gunwood.invisible_paint": "隐形涂漆",
-  "item.gunwood.glasses": "眼镜"
+  "item.gunwood.glasses": "眼镜",
+  "message.gunwood.selection.first_set": "选区起点已设置",
+  "message.gunwood.selection.second_set": "选区终点已设置（%s 个方块）",
+  "message.gunwood.selection.cleared": "选区已清除",
+  "message.gunwood.selection.too_large": "选区过大：%s 个方块（最大 %s）",
+  "message.gunwood.selection.bulk_painted": "已批量涂漆 %s 个方块",
+  "message.gunwood.selection.bulk_scraped": "已批量刮漆 %s 个方块",
+  "message.gunwood.selection.no_targets": "没有可处理方块",
+  "message.gunwood.selection.resource_missing": "资源不足",
+  "message.gunwood.selection.adjusted": "选区已调整（%s 个方块）",
+  "message.gunwood.selection.adjust_blocked": "无法继续调整选区",
+  "tooltip.gunwood.paint_selector.select": "右键方块选择起点/终点。",
+  "tooltip.gunwood.paint_selector.clear": "Shift + 右键清除选区。",
+  "tooltip.gunwood.paint_selector.adjust": "按住 Ctrl 并看向选区面滚动滚轮调整边界。",
+  "tooltip.gunwood.paint_selector.highlight": "手持时显示附近已涂漆方块。"
 }

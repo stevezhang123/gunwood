@@ -6,6 +6,21 @@
   "item.gunwood.spray_brush": "Spray Brush",
   "item.gunwood.scraper": "Scraper",
   "item.gunwood.chunk_scrape_brush": "Chunk Scrape Brush",
+  "item.gunwood.paint_selector": "Paint Selector",
   "item.gunwood.invisible_paint": "Invisible Paint",
-  "item.gunwood.glasses": "Glasses"
+  "item.gunwood.glasses": "Glasses",
+  "message.gunwood.selection.first_set": "Selection start set",
+  "message.gunwood.selection.second_set": "Selection end set (%s blocks)",
+  "message.gunwood.selection.cleared": "Selection cleared",
+  "message.gunwood.selection.too_large": "Selection too large: %s blocks (max %s)",
+  "message.gunwood.selection.bulk_painted": "Painted %s blocks",
+  "message.gunwood.selection.bulk_scraped": "Cleared paint from %s blocks",
+  "message.gunwood.selection.no_targets": "No valid blocks to process",
+  "message.gunwood.selection.resource_missing": "Not enough resources",
+  "message.gunwood.selection.adjusted": "Selection adjusted (%s blocks)",
+  "message.gunwood.selection.adjust_blocked": "Cannot adjust selection further",
+  "tooltip.gunwood.paint_selector.select": "Right-click blocks to set the selection start and end.",
+  "tooltip.gunwood.paint_selector.clear": "Shift right-click to clear the selection.",
+  "tooltip.gunwood.paint_selector.adjust": "Hold Ctrl and scroll while looking at a selection face to adjust it.",
+  "tooltip.gunwood.paint_selector.highlight": "Hold to highlight nearby painted blocks."
 }

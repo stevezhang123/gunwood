@@ -1,6 +1,6 @@
 package io.github.stevezhang123.gunwood.mixin.client;
 
-import io.github.stevezhang123.gunwood.client.render.GunwoodRenderVisibility;
+import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,7 +17,7 @@ public abstract class FlywheelRebuildTaskMixin {
             require = 0
     )
     private void gunwood$skipHiddenPaintedBlockEntityInRebuild(@Coerce Object compileResults, BlockEntity blockEntity, CallbackInfo ci) {
-        if (GunwoodRenderVisibility.shouldHideBlockEntity(blockEntity)) {
+        if (GunwoodClientRenderRules.shouldSkipBlockEntity(blockEntity)) {
             ci.cancel();
         }
     }
