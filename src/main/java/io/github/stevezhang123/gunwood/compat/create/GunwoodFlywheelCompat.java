@@ -2,6 +2,7 @@ package io.github.stevezhang123.gunwood.compat.create;
 
 import io.github.stevezhang123.gunwood.client.ClientPaintedBlockCache;
 import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -26,7 +27,7 @@ public final class GunwoodFlywheelCompat {
     }
 
     public static void refreshPaintedBlock(Level level, BlockPos pos) {
-        if (level == null || !level.isClientSide()) {
+        if (level == null || !level.isClientSide() || !GunwoodCommonConfig.enableCreateCompat()) {
             return;
         }
 
@@ -45,7 +46,7 @@ public final class GunwoodFlywheelCompat {
     }
 
     private static void refreshAllPaintedBlocks(Level level, Collection<BlockPos> positions) {
-        if (level == null || !level.isClientSide()) {
+        if (level == null || !level.isClientSide() || !GunwoodCommonConfig.enableCreateCompat()) {
             return;
         }
 

@@ -1,5 +1,6 @@
 package io.github.stevezhang123.gunwood.paint;
 
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
@@ -45,6 +46,10 @@ public final class PaintedBlockManager {
     }
 
     public static void refreshLight(ServerLevel level, BlockPos pos) {
+        if (!GunwoodCommonConfig.refreshLightOnPaintChange()) {
+            return;
+        }
+
         notifyLightRelevantBlockChange(level, pos);
         updateSkyLightSources(level, pos);
         BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))
@@ -52,7 +57,7 @@ public final class PaintedBlockManager {
     }
 
     private static void refreshLight(ServerLevel level, Collection<BlockPos> positions) {
-        if (positions.isEmpty()) {
+        if (positions.isEmpty() || !GunwoodCommonConfig.refreshLightOnPaintChange()) {
             return;
         }
 

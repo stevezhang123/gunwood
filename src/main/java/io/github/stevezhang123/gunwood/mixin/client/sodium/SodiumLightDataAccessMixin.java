@@ -1,6 +1,7 @@
 package io.github.stevezhang123.gunwood.mixin.client.sodium;
 
 import io.github.stevezhang123.gunwood.client.GunwoodClientLightRules;
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
@@ -27,7 +28,7 @@ public abstract class SodiumLightDataAccessMixin {
     @Inject(method = "compute", at = @At("HEAD"), cancellable = true, remap = false)
     private void gunwood$treatPaintedBlocksAsTransparentLightSamples(int x, int y, int z, CallbackInfoReturnable<Integer> cir) {
         BlockPos pos = this.gunwood$lightPos.set(x, y, z);
-        if (!GunwoodClientLightRules.isPainted(this.level, pos)) {
+        if (!GunwoodCommonConfig.enableSodiumCompat() || !GunwoodClientLightRules.isPainted(this.level, pos)) {
             return;
         }
 

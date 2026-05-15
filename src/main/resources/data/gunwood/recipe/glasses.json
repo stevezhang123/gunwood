@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "N": {
+      "item": "minecraft:iron_nugget"
+    },
+    "T": {
+      "item": "minecraft:tinted_glass"
+    }
+  },
+  "pattern": [
+    "GNG",
+    "TGT",
+    "GNG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "gunwood:glasses"
+  }
+}

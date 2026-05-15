@@ -2,6 +2,7 @@ package io.github.stevezhang123.gunwood.client;
 
 import io.github.stevezhang123.gunwood.compat.create.GunwoodFlywheelCompat;
 import io.github.stevezhang123.gunwood.compat.create.GunwoodCreateContraptionCompat;
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
@@ -139,7 +140,7 @@ public final class ClientPaintedBlockCache {
 
     private static void markRenderDirty(BlockPos pos) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level != null) {
+        if (minecraft.level != null && GunwoodCommonConfig.refreshLightOnPaintChange()) {
             updateSkyLightSources(pos);
             BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))
                     .forEach(lightPos -> minecraft.level.getLightEngine().checkBlock(lightPos.immutable()));
@@ -181,7 +182,7 @@ public final class ClientPaintedBlockCache {
                     .forEach(lightPos -> lightPositions.add(lightPos.immutable()));
         }
 
-        if (minecraft.level != null) {
+        if (minecraft.level != null && GunwoodCommonConfig.refreshLightOnPaintChange()) {
             lightPositions.forEach(minecraft.level.getLightEngine()::checkBlock);
             minecraft.level.getLightEngine().runLightUpdates();
         }

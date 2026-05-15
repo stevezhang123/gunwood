@@ -1,6 +1,7 @@
 package io.github.stevezhang123.gunwood.mixin.client;
 
 import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Coerce;
@@ -17,7 +18,7 @@ public abstract class FlywheelBlockEntityStorageMixin {
             require = 0
     )
     private void gunwood$skipHiddenPaintedBlockEntityVisual(BlockEntity blockEntity, CallbackInfoReturnable<Boolean> cir) {
-        if (GunwoodClientRenderRules.shouldSkipBlockEntity(blockEntity)) {
+        if (GunwoodCommonConfig.enableCreateCompat() && GunwoodClientRenderRules.shouldSkipBlockEntity(blockEntity)) {
             cir.setReturnValue(false);
         }
     }
@@ -34,7 +35,7 @@ public abstract class FlywheelBlockEntityStorageMixin {
             float partialTick,
             CallbackInfoReturnable<Object> cir
     ) {
-        if (GunwoodClientRenderRules.shouldSkipBlockEntity(blockEntity)) {
+        if (GunwoodCommonConfig.enableCreateCompat() && GunwoodClientRenderRules.shouldSkipBlockEntity(blockEntity)) {
             cir.setReturnValue(null);
         }
     }

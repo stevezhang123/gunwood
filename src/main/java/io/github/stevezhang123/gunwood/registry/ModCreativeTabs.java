@@ -18,9 +18,7 @@ public final class ModCreativeTabs {
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.SPRAY_BRUSH.get());
                         output.accept(ModItems.SCRAPER.get());
-                        output.accept(ModItems.CHUNK_SCRAPE_BRUSH.get());
                         output.accept(ModItems.PAINT_SELECTOR.get());
-                        output.accept(ModItems.INVISIBLE_PAINT.get());
                         output.accept(ModItems.GLASSES.get());
                     })
                     .build()

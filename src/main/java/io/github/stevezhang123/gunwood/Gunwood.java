@@ -1,19 +1,20 @@
 package io.github.stevezhang123.gunwood;
 
 import com.mojang.logging.LogUtils;
+import io.github.stevezhang123.gunwood.compat.curios.GunwoodCuriosClientCompat;
+import io.github.stevezhang123.gunwood.config.GunwoodClientConfig;
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import io.github.stevezhang123.gunwood.network.ModNetworking;
 import io.github.stevezhang123.gunwood.paint.PaintedBlockSyncEvents;
 import io.github.stevezhang123.gunwood.registry.ModCreativeTabs;
 import io.github.stevezhang123.gunwood.registry.ModItems;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelectionEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.api.distmarker.Dist;
@@ -66,7 +67,8 @@ public class Gunwood {
         NeoForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerRespawn);
         NeoForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerChangedDimension);
         registerOptionalCompat("ftbultimine", "io.github.stevezhang123.gunwood.compat.ftbultimine.GunwoodFTBUltimineCompat");
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modContainer.registerConfig(ModConfig.Type.COMMON, GunwoodCommonConfig.SPEC, "gunwood-common.toml");
+        modContainer.registerConfig(ModConfig.Type.CLIENT, GunwoodClientConfig.SPEC, "gunwood-client.toml");
     }
 
     private static void registerOptionalCompat(String modId, String className) {
@@ -83,13 +85,6 @@ public class Gunwood {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         LOGGER.info("Gunwood common setup");
-
-        if (Config.logDirtBlock) {
-            LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-        }
-
-        LOGGER.info(Config.magicNumberIntroduction + Config.magicNumber);
-        Config.items.forEach(item -> LOGGER.info("ITEM >> {}", item));
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
@@ -109,6 +104,7 @@ public class Gunwood {
         public static void onClientSetup(FMLClientSetupEvent event) {
             LOGGER.info("Gunwood client setup");
             LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+            event.enqueueWork(GunwoodCuriosClientCompat::registerInvisibleGlassesRenderer);
         }
     }
 }

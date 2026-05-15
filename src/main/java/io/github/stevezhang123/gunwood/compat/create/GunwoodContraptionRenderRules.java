@@ -1,6 +1,7 @@
 package io.github.stevezhang123.gunwood.compat.create;
 
 import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -19,6 +20,10 @@ public final class GunwoodContraptionRenderRules {
     }
 
     public static Object filterRenderedBlocks(Object clientContraption, Object renderedBlocks) {
+        if (!GunwoodCommonConfig.enableCreateContraptionCompat()) {
+            return renderedBlocks;
+        }
+
         Object contraption = getField(clientContraption, "contraption");
         if (contraption == null || renderedBlocks == null) {
             return renderedBlocks;
@@ -41,6 +46,10 @@ public final class GunwoodContraptionRenderRules {
     }
 
     public static BitSet filterRenderedBlockEntities(Object clientContraption, BitSet original) {
+        if (!GunwoodCommonConfig.enableCreateContraptionCompat()) {
+            return original;
+        }
+
         Object contraption = getField(clientContraption, "contraption");
         Object renderedBlockEntities = getField(clientContraption, "renderedBlockEntities");
         if (contraption == null || !(renderedBlockEntities instanceof List<?> blockEntities)) {
@@ -59,12 +68,20 @@ public final class GunwoodContraptionRenderRules {
     }
 
     public static boolean shouldSkipContraptionBlockEntity(Object contraptionVisual, BlockEntity blockEntity) {
+        if (!GunwoodCommonConfig.enableCreateContraptionCompat()) {
+            return false;
+        }
+
         Object entity = getFieldInHierarchy(contraptionVisual, "entity");
         Object contraption = invokeNoArgs(entity, "getContraption");
         return blockEntity != null && contraption != null && shouldSkipContraptionLocalPos(contraption, blockEntity.getBlockPos());
     }
 
     public static boolean shouldSkipContraptionActor(Object contraptionVisual, Object actor) {
+        if (!GunwoodCommonConfig.enableCreateContraptionCompat()) {
+            return false;
+        }
+
         Object entity = getFieldInHierarchy(contraptionVisual, "entity");
         Object contraption = invokeNoArgs(entity, "getContraption");
         Object blockInfo = invokeNoArgs(actor, "getLeft");
@@ -73,6 +90,10 @@ public final class GunwoodContraptionRenderRules {
     }
 
     public static boolean shouldSkipMovementContext(Object context) {
+        if (!GunwoodCommonConfig.enableCreateContraptionCompat()) {
+            return false;
+        }
+
         Object contraption = getField(context, "contraption");
         Object localPos = getField(context, "localPos");
         return contraption != null && localPos instanceof BlockPos pos && shouldSkipContraptionLocalPos(contraption, pos);

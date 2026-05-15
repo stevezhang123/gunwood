@@ -1,5 +1,6 @@
 package io.github.stevezhang123.gunwood.paint;
 
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
@@ -12,10 +13,14 @@ public final class PaintedBlockLightTransparency {
     }
 
     public static boolean isPainted(ServerLevel level, BlockPos pos) {
-        return PaintedBlockManager.contains(level, pos);
+        return GunwoodCommonConfig.enableLightTransparency() && PaintedBlockManager.contains(level, pos);
     }
 
     public static boolean isPainted(BlockGetter level, BlockPos pos) {
+        if (!GunwoodCommonConfig.enableLightTransparency()) {
+            return false;
+        }
+
         if (level instanceof ServerLevel serverLevel) {
             return isPainted(serverLevel, pos);
         }

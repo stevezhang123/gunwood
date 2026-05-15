@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "minecraft:calibrated_sculk_sensor"
+    },
+    "T": {
+      "item": "minecraft:tinted_glass"
+    }
+  },
+  "pattern": [
+    "TTT",
+    "TCT",
+    "TTT"
+  ],
+  "result": {
+    "count": 1,
+    "id": "gunwood:paint_selector"
+  }
+}

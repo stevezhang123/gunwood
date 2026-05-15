@@ -4,17 +4,18 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.stevezhang123.gunwood.Gunwood;
 import io.github.stevezhang123.gunwood.client.ClientPaintedBlockCache;
+import io.github.stevezhang123.gunwood.config.GunwoodClientConfig;
+import io.github.stevezhang123.gunwood.config.GunwoodClientConfig.Color;
 import io.github.stevezhang123.gunwood.registry.ModItems;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelection;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -26,9 +27,6 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 @EventBusSubscriber(modid = Gunwood.MODID, value = Dist.CLIENT)
 public final class GunwoodSelectionRenderEvents {
-    private static final int PAINTED_HIGHLIGHT_RANGE = 32;
-    private static final int PAINTED_HIGHLIGHT_LIMIT = 512;
-
     private GunwoodSelectionRenderEvents() {
     }
 
@@ -39,7 +37,13 @@ public final class GunwoodSelectionRenderEvents {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.level == null || !isHoldingPaintSelector(minecraft.player)) {
+        if (minecraft.player == null || minecraft.level == null) {
+            return;
+        }
+
+        boolean showSelectionOverlays = GunwoodSelectionOverlayVisibility.shouldShowSelectionOverlays(minecraft.player);
+        boolean showPaintedBlockOverlays = GunwoodSelectionOverlayVisibility.shouldShowPaintedBlockOverlays(minecraft.player);
+        if (!showSelectionOverlays && !showPaintedBlockOverlays) {
             return;
         }
 
@@ -51,34 +55,39 @@ public final class GunwoodSelectionRenderEvents {
         poseStack.pushPose();
         poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
-        if (GunwoodClientSelectionState.selection().isPresent()) {
+        if (showSelectionOverlays && GunwoodClientSelectionState.selection().isPresent()) {
             GunwoodSelection selection = GunwoodClientSelectionState.selection().get();
-            renderSelectionBox(poseStack, lines, selection, 0.05F, 0.95F, 1.0F, 1.0F, true);
-            GunwoodClientSelectionEvents.hoveredSelectionFace(minecraft.player)
+            renderSelectionBox(poseStack, lines, selection, GunwoodClientConfig.selectionOutlineColor(), true);
+            selectionHighlightFace(minecraft.player)
                     .ifPresent(face -> renderSelectionFace(poseStack, lines, selection, face));
-        } else {
+        } else if (showSelectionOverlays && GunwoodSelectionOverlayVisibility.isHoldingPaintSelector(minecraft.player)) {
             GunwoodClientSelectionState.firstPos().ifPresent(pos -> {
-                renderBlockBox(poseStack, lines, pos, 0.1F, 0.8F, 1.0F, 1.0F, true);
+                renderBlockBox(poseStack, lines, pos, GunwoodClientConfig.selectionOutlineColor(), true);
                 previewSelection(minecraft, pos)
-                        .ifPresent(selection -> renderSelectionBox(poseStack, lines, selection, 0.2F, 0.75F, 1.0F, 0.75F, false));
+                        .ifPresent(selection -> renderSelectionBox(poseStack, lines, selection, GunwoodClientConfig.selectionOutlineColor(), false));
             });
         }
 
-        BlockPos playerPos = minecraft.player.blockPosition();
-        for (BlockPos pos : ClientPaintedBlockCache.positionsNear(playerPos, PAINTED_HIGHLIGHT_RANGE, PAINTED_HIGHLIGHT_LIMIT)) {
-            renderBlockBox(poseStack, lines, pos, 1.0F, 0.8F, 0.15F, 0.45F, false);
+        if (showPaintedBlockOverlays) {
+            BlockPos playerPos = minecraft.player.blockPosition();
+            for (BlockPos pos : ClientPaintedBlockCache.positionsNear(
+                    playerPos,
+                    GunwoodClientConfig.PAINTED_BLOCK_OVERLAY_RANGE.get(),
+                    GunwoodClientConfig.MAX_PAINTED_BLOCK_OVERLAY_COUNT.get()
+            )) {
+                renderBlockBox(poseStack, lines, pos, GunwoodClientConfig.paintedBlockOutlineColor(), false);
+            }
         }
 
         poseStack.popPose();
         bufferSource.endBatch(RenderType.lines());
     }
 
-    private static void renderSelectionBox(PoseStack poseStack, VertexConsumer lines, GunwoodSelection selection, float red, float green, float blue, float alpha, boolean prominent) {
-        AABB box = GunwoodClientSelectionEvents.selectionBox(selection).inflate(0.004D);
-        LevelRenderer.renderLineBox(poseStack, lines, box, red, green, blue, alpha);
-        LevelRenderer.renderLineBox(poseStack, lines, box.inflate(0.012D), red, green, blue, alpha);
+    private static void renderSelectionBox(PoseStack poseStack, VertexConsumer lines, GunwoodSelection selection, Color color, boolean prominent) {
+        AABB box = GunwoodClientSelectionEvents.selectionBox(selection).inflate(GunwoodClientConfig.OUTLINE_INFLATION.get());
+        renderInflatedLineBox(poseStack, lines, box, color, GunwoodClientConfig.SELECTION_LINE_WIDTH.get());
         if (prominent) {
-            LevelRenderer.renderLineBox(poseStack, lines, box.inflate(0.028D), 1.0F, 1.0F, 1.0F, 0.65F);
+            renderInflatedLineBox(poseStack, lines, box.inflate(0.028D), GunwoodClientConfig.hoveredSelectionOutlineColor(), 1.0D);
         }
     }
 
@@ -93,16 +102,38 @@ public final class GunwoodSelectionRenderEvents {
             case SOUTH -> new AABB(box.minX, box.minY, box.maxZ - thickness, box.maxX, box.maxY, box.maxZ + thickness);
             case NORTH -> new AABB(box.minX, box.minY, box.minZ - thickness, box.maxX, box.maxY, box.minZ + thickness);
         };
-        LevelRenderer.renderLineBox(poseStack, lines, faceBox, 1.0F, 0.95F, 0.25F, 1.0F);
-        LevelRenderer.renderLineBox(poseStack, lines, faceBox.inflate(0.012D), 1.0F, 1.0F, 1.0F, 0.75F);
+        renderInflatedLineBox(poseStack, lines, faceBox, GunwoodClientConfig.selectionFaceHighlightColor(), 1.0D);
+        renderInflatedLineBox(poseStack, lines, faceBox.inflate(0.012D), GunwoodClientConfig.hoveredSelectionOutlineColor(), 1.0D);
     }
 
-    private static void renderBlockBox(PoseStack poseStack, VertexConsumer lines, BlockPos pos, float red, float green, float blue, float alpha, boolean prominent) {
-        AABB box = new AABB(pos).inflate(0.006D);
-        LevelRenderer.renderLineBox(poseStack, lines, box, red, green, blue, alpha);
+    private static void renderBlockBox(PoseStack poseStack, VertexConsumer lines, BlockPos pos, Color color, boolean prominent) {
+        AABB box = new AABB(pos).inflate(GunwoodClientConfig.OUTLINE_INFLATION.get());
+        renderInflatedLineBox(poseStack, lines, box, color, prominent ? GunwoodClientConfig.SELECTION_LINE_WIDTH.get() : GunwoodClientConfig.PAINTED_BLOCK_LINE_WIDTH.get());
         if (prominent) {
-            LevelRenderer.renderLineBox(poseStack, lines, box.inflate(0.018D), 1.0F, 1.0F, 1.0F, 0.7F);
+            renderInflatedLineBox(poseStack, lines, box.inflate(0.018D), GunwoodClientConfig.hoveredSelectionOutlineColor(), 1.0D);
         }
+    }
+
+    private static void renderInflatedLineBox(PoseStack poseStack, VertexConsumer lines, AABB box, Color color, double width) {
+        int passes = Math.max(1, (int) Math.round(width));
+        for (int pass = 0; pass < passes; pass++) {
+            LevelRenderer.renderLineBox(
+                    poseStack,
+                    lines,
+                    box.inflate(pass * GunwoodClientConfig.OUTLINE_INFLATION.get()),
+                    color.red(),
+                    color.green(),
+                    color.blue(),
+                    color.alpha()
+            );
+        }
+    }
+
+    private static java.util.Optional<Direction> selectionHighlightFace(Player player) {
+        if (Screen.hasControlDown() && GunwoodSelectionOverlayVisibility.isHoldingPaintSelector(player)) {
+            return GunwoodClientSelectionEvents.selectionAdjustmentFace(player);
+        }
+        return GunwoodClientSelectionEvents.hoveredSelectionFace(player);
     }
 
     private static java.util.Optional<GunwoodSelection> previewSelection(Minecraft minecraft, BlockPos firstPos) {
@@ -113,12 +144,4 @@ public final class GunwoodSelectionRenderEvents {
         return java.util.Optional.of(new GunwoodSelection(firstPos, ((BlockHitResult) minecraft.hitResult).getBlockPos()));
     }
 
-    private static boolean isHoldingPaintSelector(Player player) {
-        return isPaintSelector(player.getItemInHand(InteractionHand.MAIN_HAND))
-                || isPaintSelector(player.getItemInHand(InteractionHand.OFF_HAND));
-    }
-
-    private static boolean isPaintSelector(ItemStack stack) {
-        return stack.is(ModItems.PAINT_SELECTOR.get());
-    }
 }

@@ -1,5 +1,6 @@
 package io.github.stevezhang123.gunwood.selection;
 
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,8 +11,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class GunwoodSelectionManager {
-    public static final int MAX_SELECTION_VOLUME = 4096;
-
     private static final Map<UUID, BlockPos> FIRST_POSITIONS = new HashMap<>();
     private static final Map<UUID, GunwoodSelection> SELECTIONS = new HashMap<>();
 
@@ -31,6 +30,11 @@ public final class GunwoodSelectionManager {
         }
 
         GunwoodSelection selection = new GunwoodSelection(firstPos, immutablePos);
+        if (selection.volume() > maxSelectionVolume()) {
+            player.sendSystemMessage(Component.translatable("message.gunwood.selection.too_large", selection.volume(), maxSelectionVolume()));
+            return;
+        }
+
         FIRST_POSITIONS.put(playerId, firstPos);
         SELECTIONS.put(playerId, selection);
         player.sendSystemMessage(Component.translatable("message.gunwood.selection.second_set", selection.volume()));
@@ -41,8 +45,9 @@ public final class GunwoodSelectionManager {
     }
 
     public static void setSelection(ServerPlayer player, GunwoodSelection selection) {
-        if (selection.volume() > MAX_SELECTION_VOLUME) {
-            player.sendSystemMessage(Component.translatable("message.gunwood.selection.too_large", selection.volume(), MAX_SELECTION_VOLUME));
+        int maxVolume = maxAdjustableSelectionVolume();
+        if (selection.volume() > maxVolume) {
+            player.sendSystemMessage(Component.translatable("message.gunwood.selection.too_large", selection.volume(), maxVolume));
             return;
         }
 
@@ -59,5 +64,13 @@ public final class GunwoodSelectionManager {
     public static void clear(UUID playerId) {
         FIRST_POSITIONS.remove(playerId);
         SELECTIONS.remove(playerId);
+    }
+
+    public static int maxSelectionVolume() {
+        return GunwoodCommonConfig.MAX_SELECTION_VOLUME.get();
+    }
+
+    public static int maxAdjustableSelectionVolume() {
+        return Math.min(GunwoodCommonConfig.MAX_SELECTION_VOLUME.get(), GunwoodCommonConfig.MAX_BATCH_OPERATION_BLOCKS.get());
     }
 }

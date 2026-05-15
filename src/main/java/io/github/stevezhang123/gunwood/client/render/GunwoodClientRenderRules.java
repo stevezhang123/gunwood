@@ -1,10 +1,10 @@
 package io.github.stevezhang123.gunwood.client.render;
 
 import io.github.stevezhang123.gunwood.client.ClientPaintedBlockCache;
-import io.github.stevezhang123.gunwood.registry.ModItems;
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
+import io.github.stevezhang123.gunwood.item.GunwoodGlassesHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
@@ -28,7 +28,7 @@ public final class GunwoodClientRenderRules {
     }
 
     public static boolean shouldSkipCreateKineticRender(BlockEntity blockEntity) {
-        return shouldSkipBlockEntity(blockEntity);
+        return GunwoodCommonConfig.enableCreateCompat() && shouldSkipBlockEntity(blockEntity);
     }
 
     public static boolean shouldSkipPaintedPos(BlockPos pos) {
@@ -39,6 +39,6 @@ public final class GunwoodClientRenderRules {
 
     public static boolean isWearingGlasses() {
         Player player = Minecraft.getInstance().player;
-        return player != null && player.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.GLASSES.get());
+        return GunwoodGlassesHelper.isWearingGunwoodGlasses(player);
     }
 }

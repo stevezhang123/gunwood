@@ -74,13 +74,22 @@ public final class GunwoodClientSelectionEvents {
             return;
         }
 
-        Optional<Direction> face = hoveredSelectionFace(minecraft.player);
+        Optional<GunwoodSelection> currentSelection = GunwoodClientSelectionState.selection();
+        if (currentSelection.isEmpty()) {
+            return;
+        }
+
+        Optional<Direction> face = selectionAdjustmentFace(minecraft.player);
         if (face.isEmpty()) {
             return;
         }
 
+        if (event.getScrollDeltaY() == 0.0D) {
+            return;
+        }
+
         int scrollAmount = event.getScrollDeltaY() > 0.0D ? 1 : -1;
-        Optional<GunwoodSelection> adjusted = GunwoodClientSelectionState.adjustSelection(face.get(), scrollAmount, GunwoodSelectionManager.MAX_SELECTION_VOLUME);
+        Optional<GunwoodSelection> adjusted = GunwoodClientSelectionState.adjustSelection(face.get(), scrollAmount, GunwoodSelectionManager.maxAdjustableSelectionVolume());
         if (adjusted.isPresent()) {
             PacketDistributor.sendToServer(new SetSelectionPayload(adjusted.get()));
             minecraft.player.displayClientMessage(Component.translatable("message.gunwood.selection.adjusted", adjusted.get().volume()), true);
@@ -108,6 +117,15 @@ public final class GunwoodClientSelectionEvents {
 
     private static boolean isPaintSelector(ItemStack stack) {
         return stack.is(ModItems.PAINT_SELECTOR.get());
+    }
+
+    public static Optional<Direction> selectionAdjustmentFace(Player player) {
+        Optional<GunwoodSelection> selection = GunwoodClientSelectionState.selection();
+        if (selection.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return hoveredSelectionFace(player).or(() -> Optional.of(lookDirectionFace(player)));
     }
 
     public static Optional<Direction> hoveredSelectionFace(Player player) {
@@ -162,5 +180,20 @@ public final class GunwoodClientSelectionEvents {
 
     private static Direction nearestFace(Direction current, double distance, double epsilon, Direction face) {
         return distance < epsilon ? face : current;
+    }
+
+    private static Direction lookDirectionFace(Player player) {
+        Vec3 look = player.getViewVector(1.0F);
+        double absX = Math.abs(look.x);
+        double absY = Math.abs(look.y);
+        double absZ = Math.abs(look.z);
+
+        if (absY >= absX && absY >= absZ) {
+            return look.y >= 0.0D ? Direction.UP : Direction.DOWN;
+        }
+        if (absX >= absZ) {
+            return look.x >= 0.0D ? Direction.EAST : Direction.WEST;
+        }
+        return look.z >= 0.0D ? Direction.SOUTH : Direction.NORTH;
     }
 }

@@ -1,6 +1,7 @@
 package io.github.stevezhang123.gunwood.mixin.client.sodium;
 
 import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Blocks;
@@ -29,7 +30,8 @@ public abstract class SodiumChunkBuilderMeshingTaskMixin {
         BlockState state = ((SodiumLevelSliceAccessor) slice).gunwood$getBlockState(x, y, z);
         BlockPos pos = this.gunwood$blockPos.set(x, y, z);
 
-        if (GunwoodClientRenderRules.shouldSkipBlockRender((BlockAndTintGetter) slice, pos, state)) {
+        if (GunwoodCommonConfig.enableSodiumCompat()
+                && GunwoodClientRenderRules.shouldSkipBlockRender((BlockAndTintGetter) slice, pos, state)) {
             return Blocks.AIR.defaultBlockState();
         }
 
