@@ -1,7 +1,7 @@
 package io.github.stevezhang123.gunwood.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.stevezhang123.gunwood.client.render.GunwoodRenderVisibility;
+import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -24,7 +24,7 @@ public abstract class VanillaBlockEntityRenderMixin {
             MultiBufferSource bufferSource,
             CallbackInfo ci
     ) {
-        if (GunwoodRenderVisibility.shouldHideBlockEntity(blockEntity)) {
+        if (GunwoodClientRenderRules.shouldSkipBlockEntity(blockEntity)) {
             ci.cancel();
         }
     }

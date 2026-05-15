@@ -1,7 +1,7 @@
 package io.github.stevezhang123.gunwood.compat.create;
 
 import io.github.stevezhang123.gunwood.client.ClientPaintedBlockCache;
-import io.github.stevezhang123.gunwood.client.render.GunwoodRenderVisibility;
+import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -13,7 +13,6 @@ import java.util.Collection;
 
 public final class GunwoodFlywheelCompat {
     private static final String VISUALIZATION_MANAGER_CLASS = "dev.engine_room.flywheel.api.visualization.VisualizationManager";
-    private static final String VISUAL_MANAGER_CLASS = "dev.engine_room.flywheel.api.visualization.VisualManager";
 
     private GunwoodFlywheelCompat() {
     }
@@ -60,7 +59,7 @@ public final class GunwoodFlywheelCompat {
         }
 
         invokeVisualQueue(blockEntityVisualManager, "queueRemove", blockEntity);
-        if (!GunwoodRenderVisibility.shouldHideBlockEntity(blockEntity)) {
+        if (!GunwoodClientRenderRules.shouldSkipBlockEntity(blockEntity)) {
             invokeVisualQueue(blockEntityVisualManager, "queueAdd", blockEntity);
         }
     }
@@ -86,11 +85,42 @@ public final class GunwoodFlywheelCompat {
 
     private static void invokeVisualQueue(Object visualManager, String methodName, BlockEntity blockEntity) {
         try {
-            Class<?> visualManagerClass = Class.forName(VISUAL_MANAGER_CLASS, false, Thread.currentThread().getContextClassLoader());
-            visualManagerClass.getMethod(methodName, Object.class).invoke(visualManager, blockEntity);
+            Method method = findQueueMethod(visualManager.getClass(), methodName);
+            if (method != null) {
+                method.invoke(visualManager, blockEntity);
+            }
         } catch (ReflectiveOperationException | LinkageError ignored) {
             // Flywheel is optional; reflection failures must not affect normal Gunwood rendering.
         }
+    }
+
+    private static Method findQueueMethod(Class<?> type, String methodName) {
+        try {
+            return type.getMethod(methodName, Object.class);
+        } catch (NoSuchMethodException ignored) {
+        }
+
+        Class<?> current = type;
+        while (current != null) {
+            try {
+                Method method = current.getDeclaredMethod(methodName, Object.class);
+                method.setAccessible(true);
+                return method;
+            } catch (NoSuchMethodException ignored) {
+                current = current.getSuperclass();
+            } catch (SecurityException ignored) {
+                return null;
+            }
+        }
+
+        for (Class<?> iface : type.getInterfaces()) {
+            Method method = findQueueMethod(iface, methodName);
+            if (method != null) {
+                return method;
+            }
+        }
+
+        return null;
     }
 
     private static void markBlockRendererDirty(BlockPos pos) {

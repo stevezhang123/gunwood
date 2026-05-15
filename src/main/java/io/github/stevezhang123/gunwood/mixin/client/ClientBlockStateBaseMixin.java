@@ -1,6 +1,6 @@
 package io.github.stevezhang123.gunwood.mixin.client;
 
-import io.github.stevezhang123.gunwood.client.ClientPaintedBlockCache;
+import io.github.stevezhang123.gunwood.client.GunwoodClientLightRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -16,21 +16,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ClientBlockStateBaseMixin {
     @Inject(method = "getLightBlock", at = @At("HEAD"), cancellable = true)
     private void gunwood$paintedBlocksDoNotBlockClientLight(BlockGetter level, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        if (ClientPaintedBlockCache.contains(pos)) {
+        if (GunwoodClientLightRules.isPainted(level, pos)) {
             cir.setReturnValue(0);
         }
     }
 
     @Inject(method = "propagatesSkylightDown", at = @At("HEAD"), cancellable = true)
     private void gunwood$paintedBlocksPropagateClientSkylight(BlockGetter level, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
-        if (ClientPaintedBlockCache.contains(pos)) {
+        if (GunwoodClientLightRules.isPainted(level, pos)) {
             cir.setReturnValue(true);
         }
     }
 
     @Inject(method = "getOcclusionShape", at = @At("HEAD"), cancellable = true)
     private void gunwood$paintedBlocksUseEmptyClientLightOcclusionShape(BlockGetter level, BlockPos pos, CallbackInfoReturnable<VoxelShape> cir) {
-        if (ClientPaintedBlockCache.contains(pos)) {
+        if (GunwoodClientLightRules.isPainted(level, pos)) {
             cir.setReturnValue(Shapes.empty());
         }
     }
@@ -42,15 +42,22 @@ public abstract class ClientBlockStateBaseMixin {
             Direction direction,
             CallbackInfoReturnable<VoxelShape> cir
     ) {
-        if (ClientPaintedBlockCache.contains(pos)) {
+        if (GunwoodClientLightRules.isPainted(level, pos)) {
             cir.setReturnValue(Shapes.empty());
         }
     }
 
     @Inject(method = "getShadeBrightness", at = @At("HEAD"), cancellable = true)
     private void gunwood$paintedBlocksUseTransparentClientShadeBrightness(BlockGetter level, BlockPos pos, CallbackInfoReturnable<Float> cir) {
-        if (ClientPaintedBlockCache.contains(pos)) {
+        if (GunwoodClientLightRules.isPainted(level, pos)) {
             cir.setReturnValue(1.0F);
+        }
+    }
+
+    @Inject(method = "isViewBlocking", at = @At("HEAD"), cancellable = true)
+    private void gunwood$paintedBlocksDoNotBlockClientView(BlockGetter level, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+        if (GunwoodClientLightRules.isPainted(level, pos)) {
+            cir.setReturnValue(false);
         }
     }
 }
