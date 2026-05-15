@@ -7,6 +7,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -61,8 +62,32 @@ public class PaintedBlockSavedData extends SavedData {
         }
     }
 
+    public void addAll(Collection<BlockPos> positions) {
+        boolean changed = false;
+
+        for (BlockPos pos : positions) {
+            changed |= this.paintedBlocks.add(pos.immutable());
+        }
+
+        if (changed) {
+            this.setDirty();
+        }
+    }
+
     public void remove(BlockPos pos) {
         if (this.paintedBlocks.remove(pos.immutable())) {
+            this.setDirty();
+        }
+    }
+
+    public void removeAll(Collection<BlockPos> positions) {
+        boolean changed = false;
+
+        for (BlockPos pos : positions) {
+            changed |= this.paintedBlocks.remove(pos.immutable());
+        }
+
+        if (changed) {
             this.setDirty();
         }
     }

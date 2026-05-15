@@ -19,6 +19,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
@@ -60,7 +61,20 @@ public class Gunwood {
         NeoForge.EVENT_BUS.register(this);
         NeoForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerChangedDimension);
+        registerOptionalCompat("ftbultimine", "io.github.stevezhang123.gunwood.compat.ftbultimine.GunwoodFTBUltimineCompat");
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    }
+
+    private static void registerOptionalCompat(String modId, String className) {
+        if (!ModList.get().isLoaded(modId)) {
+            return;
+        }
+
+        try {
+            Class.forName(className).getMethod("register").invoke(null);
+        } catch (ReflectiveOperationException exception) {
+            LOGGER.error("Failed to register optional compat for {}", modId, exception);
+        }
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

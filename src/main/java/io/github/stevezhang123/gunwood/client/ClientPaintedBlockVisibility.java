@@ -1,5 +1,6 @@
 package io.github.stevezhang123.gunwood.client;
 
+import io.github.stevezhang123.gunwood.client.render.GunwoodRenderVisibility;
 import io.github.stevezhang123.gunwood.registry.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -13,14 +14,12 @@ public final class ClientPaintedBlockVisibility {
     }
 
     public static boolean shouldHideOrdinaryBlockModel(BlockState state, BlockPos pos) {
-        // Ordinary block hiding stage only. This does not handle BlockEntityRenderer, Flywheel, or Create-specific rendering paths.
+        // BakedModel hiding stage. BlockEntityRenderer fallback is handled separately.
         return state.getRenderShape() == RenderShape.MODEL
-                && !state.hasBlockEntity()
-                && ClientPaintedBlockCache.contains(pos)
-                && !isWearingGlasses();
+                && GunwoodRenderVisibility.shouldHideBlockPos(pos);
     }
 
-    private static boolean isWearingGlasses() {
+    public static boolean hasGlasses() {
         Player player = Minecraft.getInstance().player;
         return player != null && player.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.GLASSES.get());
     }

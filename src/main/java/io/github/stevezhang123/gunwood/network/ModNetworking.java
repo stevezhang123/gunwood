@@ -2,7 +2,9 @@ package io.github.stevezhang123.gunwood.network;
 
 import io.github.stevezhang123.gunwood.client.ClientPaintedBlockCache;
 import io.github.stevezhang123.gunwood.network.payload.AddPaintedBlockPayload;
+import io.github.stevezhang123.gunwood.network.payload.AddPaintedBlocksPayload;
 import io.github.stevezhang123.gunwood.network.payload.RemovePaintedBlockPayload;
+import io.github.stevezhang123.gunwood.network.payload.RemovePaintedBlocksPayload;
 import io.github.stevezhang123.gunwood.network.payload.SyncPaintedBlocksPayload;
 import io.github.stevezhang123.gunwood.paint.PaintedBlockManager;
 import net.minecraft.core.BlockPos;
@@ -13,6 +15,8 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public final class ModNetworking {
     private static final String VERSION = "1";
@@ -35,9 +39,19 @@ public final class ModNetworking {
                 (payload, context) -> ClientPaintedBlockCache.add(payload.pos())
         );
         registrar.playToClient(
+                AddPaintedBlocksPayload.TYPE,
+                AddPaintedBlocksPayload.STREAM_CODEC,
+                (payload, context) -> ClientPaintedBlockCache.addAll(payload.positions())
+        );
+        registrar.playToClient(
                 RemovePaintedBlockPayload.TYPE,
                 RemovePaintedBlockPayload.STREAM_CODEC,
                 (payload, context) -> ClientPaintedBlockCache.remove(payload.pos())
+        );
+        registrar.playToClient(
+                RemovePaintedBlocksPayload.TYPE,
+                RemovePaintedBlocksPayload.STREAM_CODEC,
+                (payload, context) -> ClientPaintedBlockCache.removeAll(payload.positions())
         );
     }
 
@@ -50,7 +64,27 @@ public final class ModNetworking {
         PacketDistributor.sendToPlayersNear(level, null, pos.getX(), pos.getY(), pos.getZ(), NEARBY_SYNC_RADIUS, new AddPaintedBlockPayload(pos));
     }
 
+    public static void syncAddedToNearby(ServerLevel level, BlockPos center, Collection<BlockPos> positions) {
+        List<BlockPos> immutablePositions = positions.stream()
+                .map(BlockPos::immutable)
+                .toList();
+
+        if (!immutablePositions.isEmpty()) {
+            PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new AddPaintedBlocksPayload(immutablePositions));
+        }
+    }
+
     public static void syncRemovedToNearby(ServerLevel level, BlockPos pos) {
         PacketDistributor.sendToPlayersNear(level, null, pos.getX(), pos.getY(), pos.getZ(), NEARBY_SYNC_RADIUS, new RemovePaintedBlockPayload(pos));
+    }
+
+    public static void syncRemovedToNearby(ServerLevel level, BlockPos center, Collection<BlockPos> positions) {
+        List<BlockPos> immutablePositions = positions.stream()
+                .map(BlockPos::immutable)
+                .toList();
+
+        if (!immutablePositions.isEmpty()) {
+            PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new RemovePaintedBlocksPayload(immutablePositions));
+        }
     }
 }
