@@ -17,6 +17,8 @@
   "message.gunwood.selection.no_targets": "No valid blocks to process",
   "message.gunwood.selection.adjusted": "Selection adjusted (%s blocks)",
   "message.gunwood.selection.adjust_blocked": "Cannot adjust selection further",
+  "message.gunwood.paint.single_painted": "Painted: %s %s %s",
+  "message.gunwood.paint.single_scraped": "Cleared paint: %s %s %s",
   "tooltip.gunwood.spray_brush.summary": "Hold Shift for spray brush details.",
   "tooltip.gunwood.spray_brush.detail.1": "Applies transparent paint to blocks.",
   "tooltip.gunwood.spray_brush.detail.2": "Painted blocks are hidden and skipped by renderers.",

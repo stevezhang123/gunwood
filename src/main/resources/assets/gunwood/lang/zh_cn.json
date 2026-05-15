@@ -14,6 +14,8 @@
   "message.gunwood.selection.no_targets": "没有可处理方块",
   "message.gunwood.selection.adjusted": "选区已调整（%s 个方块）",
   "message.gunwood.selection.adjust_blocked": "无法继续调整选区",
+  "message.gunwood.paint.single_painted": "已涂漆：%s %s %s",
+  "message.gunwood.paint.single_scraped": "已清除涂漆：%s %s %s",
   "tooltip.gunwood.spray_brush.summary": "按住 Shift 查看喷刷说明。",
   "tooltip.gunwood.spray_brush.detail.1": "用于给方块涂上透明漆。",
   "tooltip.gunwood.spray_brush.detail.2": "被涂漆方块会被隐藏并跳过渲染。",
