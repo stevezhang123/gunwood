@@ -2,6 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "io.github.stevezhang123.gunwood.mixin",
+  "plugin": "io.github.stevezhang123.gunwood.mixin.GunwoodMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "BlockStateBaseMixin"
@@ -9,7 +10,10 @@
   "client": [
     "client.BlockMixin",
     "client.ClientBlockStateBaseMixin",
-    "client.BlockRenderDispatcherMixin"
+    "client.BlockRenderDispatcherMixin",
+    "client.VanillaBlockEntityRenderMixin",
+    "client.FlywheelBlockEntityStorageMixin",
+    "client.FlywheelRebuildTaskMixin"
   ],
   "injectors": {
     "defaultRequire": 1
