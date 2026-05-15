@@ -1,0 +1,99 @@
+name: Build and Release Gunwood
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag, for example v1.0.0. Leave empty to only build artifact."
+        required: false
+        type: string
+      release_name:
+        description: "Release name. Leave empty to use the tag."
+        required: false
+        type: string
+      prerelease:
+        description: "Mark release as prerelease"
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Find built jars
+        id: find_jars
+        shell: bash
+        run: |
+          mkdir -p release-jars
+          find build/libs -maxdepth 1 -type f -name "*.jar" \
+            ! -name "*-sources.jar" \
+            ! -name "*-javadoc.jar" \
+            ! -name "*-dev.jar" \
+            -exec cp {} release-jars/ \;
+          echo "Built jars:"
+          ls -la release-jars
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gunwood-build-jars
+          path: release-jars/*.jar
+          if-no-files-found: error
+
+      - name: Decide release tag
+        id: release_info
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="${{ inputs.release_tag }}"
+          fi
+
+          if [ -z "$TAG" ]; then
+            echo "create_release=false" >> "$GITHUB_OUTPUT"
+            echo "No release tag provided; only uploaded build artifacts."
+            exit 0
+          fi
+
+          NAME="${{ inputs.release_name }}"
+          if [ -z "$NAME" ]; then
+            NAME="$TAG"
+          fi
+
+          echo "create_release=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        if: steps.release_info.outputs.create_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          name: ${{ steps.release_info.outputs.name }}
+          prerelease: ${{ inputs.prerelease || false }}
+          files: release-jars/*.jar
+          generate_release_notes: true
