@@ -5,6 +5,8 @@ import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import io.github.stevezhang123.gunwood.compat.ftbultimine.GunwoodFTBAirScrapeCompat;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelection;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelectionManager;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -20,11 +22,9 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.Set;
 
 public final class GunwoodPaintActions {
     private GunwoodPaintActions() {
@@ -221,15 +221,16 @@ public final class GunwoodPaintActions {
     private static Optional<BlockPos> findPaintedPositionInLookDirection(ServerPlayer player, ServerLevel level, double range) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getViewVector(1.0F).normalize();
-        Set<BlockPos> checked = new HashSet<>();
+        LongSet checked = new LongOpenHashSet();
         double step = 0.2D;
 
         for (double distance = 0.0D; distance <= range; distance += step) {
             BlockPos pos = BlockPos.containing(eye.add(look.scale(distance)));
-            if (!checked.add(pos)) {
+            long posLong = pos.asLong();
+            if (!checked.add(posLong)) {
                 continue;
             }
-            if (PaintedBlockManager.contains(level, pos)) {
+            if (PaintedBlockManager.contains(level, posLong)) {
                 return Optional.of(pos.immutable());
             }
         }
@@ -239,23 +240,23 @@ public final class GunwoodPaintActions {
 
     private static List<BlockPos> collectConnectedPaintedPositions(ServerLevel level, BlockPos start, int maxBlocks) {
         List<BlockPos> results = new ArrayList<>();
-        Set<BlockPos> visited = new HashSet<>();
+        LongSet visited = new LongOpenHashSet();
         Queue<BlockPos> queue = new ArrayDeque<>();
 
         BlockPos immutableStart = start.immutable();
         queue.add(immutableStart);
-        visited.add(immutableStart);
+        visited.add(immutableStart.asLong());
 
         while (!queue.isEmpty() && results.size() < maxBlocks) {
             BlockPos current = queue.remove();
-            if (!PaintedBlockManager.contains(level, current)) {
+            if (!PaintedBlockManager.contains(level, current.asLong())) {
                 continue;
             }
 
             results.add(current.immutable());
             for (Direction direction : Direction.values()) {
                 BlockPos next = current.relative(direction).immutable();
-                if (visited.add(next)) {
+                if (visited.add(next.asLong())) {
                     queue.add(next);
                 }
             }

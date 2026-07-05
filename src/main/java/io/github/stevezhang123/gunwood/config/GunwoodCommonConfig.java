@@ -26,6 +26,9 @@ public final class GunwoodCommonConfig {
     public static final ModConfigSpec.BooleanValue ENABLE_SODIUM_COMPAT;
     public static final ModConfigSpec.BooleanValue ENABLE_CREATE_COMPAT;
     public static final ModConfigSpec.BooleanValue ENABLE_CREATE_CONTRAPTION_COMPAT;
+    public static final ModConfigSpec.BooleanValue ENABLE_SABLE_COMPAT;
+    public static final ModConfigSpec.BooleanValue ENABLE_SABLE_SCHEMATIC_COMPAT;
+    public static final ModConfigSpec.BooleanValue SKIP_LIGHT_REFRESH_IN_SABLE_PHYSICAL_BODIES;
     public static final ModConfigSpec.BooleanValue REQUIRE_BUILD_PERMISSION_FOR_BATCH_OPERATIONS;
 
     static {
@@ -174,6 +177,30 @@ public final class GunwoodCommonConfig {
                         "Default: true"
                 )
                 .define("enableCreateContraptionCompat", true);
+        ENABLE_SABLE_COMPAT = builder
+                .comment(
+                        "是否启用 Sable 相关兼容保护。关闭后 Gunwood 仍不硬依赖 Sable，但不会主动应用 Sable 专用兼容逻辑。",
+                        "Whether Sable compatibility safeguards are enabled. Gunwood never hard-depends on Sable, but disabling this skips Sable-specific compatibility behavior.",
+                        "默认值：true",
+                        "Default: true"
+                )
+                .define("enableSableCompat", true);
+        ENABLE_SABLE_SCHEMATIC_COMPAT = builder
+                .comment(
+                        "是否在结构/蓝图 NBT 中保存并恢复 Gunwood 透明化坐标。用于兼容 Sable schematic tool 等基于结构模板的蓝图工具。",
+                        "Whether Gunwood painted positions are saved to and restored from structure/schematic NBT. This supports Sable schematic tool and other StructureTemplate-based tools.",
+                        "默认值：true",
+                        "Default: true"
+                )
+                .define("enableSableSchematicCompat", true);
+        SKIP_LIGHT_REFRESH_IN_SABLE_PHYSICAL_BODIES = builder
+                .comment(
+                        "在 Sable 物理体或其他虚拟/无效 holder 中刷新光照失败时，是否安全跳过而不是让异常崩溃游戏。",
+                        "Whether failed light refreshes in Sable physical bodies or other virtual/invalid holders are skipped safely instead of crashing.",
+                        "默认值：true",
+                        "Default: true"
+                )
+                .define("skipLightRefreshInSablePhysicalBodies", true);
         builder.pop();
 
         builder.push("light");
@@ -219,6 +246,18 @@ public final class GunwoodCommonConfig {
 
     public static boolean enableCreateContraptionCompat() {
         return safeGet(ENABLE_CREATE_CONTRAPTION_COMPAT, true);
+    }
+
+    public static boolean enableSableCompat() {
+        return safeGet(ENABLE_SABLE_COMPAT, true);
+    }
+
+    public static boolean enableSableSchematicCompat() {
+        return enableSableCompat() && safeGet(ENABLE_SABLE_SCHEMATIC_COMPAT, true);
+    }
+
+    public static boolean skipLightRefreshInSablePhysicalBodies() {
+        return enableSableCompat() && safeGet(SKIP_LIGHT_REFRESH_IN_SABLE_PHYSICAL_BODIES, true);
     }
 
     private static boolean safeGet(ModConfigSpec.BooleanValue value, boolean fallback) {

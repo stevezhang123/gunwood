@@ -17,9 +17,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public final class ModNetworking {
     private static final String VERSION = "1";
@@ -69,7 +67,7 @@ public final class ModNetworking {
 
     public static void syncAllToPlayer(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
-        PacketDistributor.sendToPlayer(player, new SyncPaintedBlocksPayload(new ArrayList<>(PaintedBlockManager.getAll(level))));
+        PacketDistributor.sendToPlayer(player, new SyncPaintedBlocksPayload(PaintedBlockManager.getAllLongArray(level)));
     }
 
     public static void syncAddedToNearby(ServerLevel level, BlockPos pos) {
@@ -77,12 +75,13 @@ public final class ModNetworking {
     }
 
     public static void syncAddedToNearby(ServerLevel level, BlockPos center, Collection<BlockPos> positions) {
-        List<BlockPos> immutablePositions = positions.stream()
-                .map(BlockPos::immutable)
-                .toList();
+        long[] positionLongs = positions.stream().mapToLong(BlockPos::asLong).toArray();
+        syncAddedToNearby(level, center, positionLongs);
+    }
 
-        if (!immutablePositions.isEmpty()) {
-            PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new AddPaintedBlocksPayload(immutablePositions));
+    public static void syncAddedToNearby(ServerLevel level, BlockPos center, long[] positionLongs) {
+        if (positionLongs.length > 0) {
+            PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new AddPaintedBlocksPayload(positionLongs));
         }
     }
 
@@ -91,12 +90,13 @@ public final class ModNetworking {
     }
 
     public static void syncRemovedToNearby(ServerLevel level, BlockPos center, Collection<BlockPos> positions) {
-        List<BlockPos> immutablePositions = positions.stream()
-                .map(BlockPos::immutable)
-                .toList();
+        long[] positionLongs = positions.stream().mapToLong(BlockPos::asLong).toArray();
+        syncRemovedToNearby(level, center, positionLongs);
+    }
 
-        if (!immutablePositions.isEmpty()) {
-            PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new RemovePaintedBlocksPayload(immutablePositions));
+    public static void syncRemovedToNearby(ServerLevel level, BlockPos center, long[] positionLongs) {
+        if (positionLongs.length > 0) {
+            PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new RemovePaintedBlocksPayload(positionLongs));
         }
     }
 }
