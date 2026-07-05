@@ -13,7 +13,7 @@ public final class PaintedBlockLightTransparency {
     }
 
     public static boolean isPainted(ServerLevel level, BlockPos pos) {
-        return GunwoodCommonConfig.enableLightTransparency() && PaintedBlockManager.contains(level, pos);
+        return GunwoodCommonConfig.enableLightTransparency() && PaintedBlockManager.contains(level, pos.asLong());
     }
 
     public static boolean isPainted(BlockGetter level, BlockPos pos) {
@@ -26,19 +26,19 @@ public final class PaintedBlockLightTransparency {
         }
 
         if (level instanceof LevelChunk levelChunk && levelChunk.getLevel() instanceof ServerLevel serverLevel) {
-            return isPainted(serverLevel, toWorldPos(levelChunk, pos));
+            return PaintedBlockManager.contains(serverLevel, toWorldPosLong(levelChunk, pos));
         }
 
         return false;
     }
 
-    private static BlockPos toWorldPos(ChunkAccess chunk, BlockPos pos) {
+    private static long toWorldPosLong(ChunkAccess chunk, BlockPos pos) {
         int x = pos.getX();
         int z = pos.getZ();
         if (x >= 0 && x < 16 && z >= 0 && z < 16) {
-            return new BlockPos(chunk.getPos().getMinBlockX() + x, pos.getY(), chunk.getPos().getMinBlockZ() + z);
+            return BlockPos.asLong(chunk.getPos().getMinBlockX() + x, pos.getY(), chunk.getPos().getMinBlockZ() + z);
         }
 
-        return pos;
+        return pos.asLong();
     }
 }

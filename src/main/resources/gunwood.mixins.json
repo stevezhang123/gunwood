@@ -7,7 +7,8 @@
   "mixins": [
     "BlockStateBaseMixin",
     "ChunkSkyLightSourcesMixin",
-    "LightEngineMixin"
+    "LightEngineMixin",
+    "StructureTemplateMixin"
   ],
   "client": [
     "client.BlockMixin",
