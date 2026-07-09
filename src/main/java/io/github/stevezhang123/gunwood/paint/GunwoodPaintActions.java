@@ -1,5 +1,6 @@
 package io.github.stevezhang123.gunwood.paint;
 
+import com.mojang.logging.LogUtils;
 import io.github.stevezhang123.gunwood.network.ModNetworking;
 import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import io.github.stevezhang123.gunwood.compat.ftbultimine.GunwoodFTBAirScrapeCompat;
@@ -12,6 +13,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
@@ -25,8 +27,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
+import org.slf4j.Logger;
 
 public final class GunwoodPaintActions {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private GunwoodPaintActions() {
     }
 
@@ -79,7 +84,18 @@ public final class GunwoodPaintActions {
 
     public static int paintSingle(ServerPlayer player, ServerLevel level, BlockPos pos, ItemStack toolStack, InteractionHand hand) {
         BlockState state = level.getBlockState(pos);
-        if (!GunwoodPaintRules.canPaint(level, pos, state, player)) {
+        boolean canPaint = GunwoodPaintRules.canPaint(level, pos, state, player);
+        debugPaintPath(
+                "paint_single_check player={} block={} pos={} {} {} canPaint={} alreadyPainted={}",
+                player.getGameProfile().getName(),
+                BuiltInRegistries.BLOCK.getKey(state.getBlock()),
+                pos.getX(),
+                pos.getY(),
+                pos.getZ(),
+                canPaint,
+                PaintedBlockManager.contains(level, pos)
+        );
+        if (!canPaint) {
             return 0;
         }
         int damagePerUse = GunwoodCommonConfig.SPRAYER_DAMAGE_PER_USE.get();
@@ -89,6 +105,15 @@ public final class GunwoodPaintActions {
         }
 
         PaintedBlockManager.add(level, pos);
+        boolean containsAfterAdd = PaintedBlockManager.contains(level, pos);
+        debugPaintPath(
+                "paint_single_added player={} pos={} {} {} serverContainsAfterAdd={} syncPacketCount=1",
+                player.getGameProfile().getName(),
+                pos.getX(),
+                pos.getY(),
+                pos.getZ(),
+                containsAfterAdd
+        );
         damageTool(player, toolStack, hand, damagePerUse);
         ModNetworking.syncAddedToNearby(level, pos);
         player.sendSystemMessage(Component.translatable("message.gunwood.paint.single_painted", pos.getX(), pos.getY(), pos.getZ()));
@@ -295,6 +320,12 @@ public final class GunwoodPaintActions {
                     toolStack.setDamageValue(newDamage);
                 }
             }
+        }
+    }
+
+    private static void debugPaintPath(String message, Object... args) {
+        if (GunwoodCommonConfig.debugPaintingPath()) {
+            LOGGER.info("[Gunwood paint debug] " + message, args);
         }
     }
 }

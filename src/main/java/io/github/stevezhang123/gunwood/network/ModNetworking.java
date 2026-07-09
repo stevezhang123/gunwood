@@ -1,6 +1,8 @@
 package io.github.stevezhang123.gunwood.network;
 
+import com.mojang.logging.LogUtils;
 import io.github.stevezhang123.gunwood.client.ClientPaintedBlockCache;
+import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import io.github.stevezhang123.gunwood.network.payload.AddPaintedBlockPayload;
 import io.github.stevezhang123.gunwood.network.payload.AddPaintedBlocksPayload;
 import io.github.stevezhang123.gunwood.network.payload.RemovePaintedBlockPayload;
@@ -16,10 +18,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import org.slf4j.Logger;
 
 import java.util.Collection;
 
 public final class ModNetworking {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final String VERSION = "1";
     private static final double NEARBY_SYNC_RADIUS = 64.0D;
 
@@ -71,6 +75,7 @@ public final class ModNetworking {
     }
 
     public static void syncAddedToNearby(ServerLevel level, BlockPos pos) {
+        debugPaintPath("sync_added_single pos={} {} {} packetCount=1 radius={}", pos.getX(), pos.getY(), pos.getZ(), NEARBY_SYNC_RADIUS);
         PacketDistributor.sendToPlayersNear(level, null, pos.getX(), pos.getY(), pos.getZ(), NEARBY_SYNC_RADIUS, new AddPaintedBlockPayload(pos));
     }
 
@@ -81,11 +86,13 @@ public final class ModNetworking {
 
     public static void syncAddedToNearby(ServerLevel level, BlockPos center, long[] positionLongs) {
         if (positionLongs.length > 0) {
+            debugPaintPath("sync_added_batch center={} {} {} packetCount={} radius={}", center.getX(), center.getY(), center.getZ(), positionLongs.length, NEARBY_SYNC_RADIUS);
             PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new AddPaintedBlocksPayload(positionLongs));
         }
     }
 
     public static void syncRemovedToNearby(ServerLevel level, BlockPos pos) {
+        debugPaintPath("sync_removed_single pos={} {} {} packetCount=1 radius={}", pos.getX(), pos.getY(), pos.getZ(), NEARBY_SYNC_RADIUS);
         PacketDistributor.sendToPlayersNear(level, null, pos.getX(), pos.getY(), pos.getZ(), NEARBY_SYNC_RADIUS, new RemovePaintedBlockPayload(pos));
     }
 
@@ -96,7 +103,14 @@ public final class ModNetworking {
 
     public static void syncRemovedToNearby(ServerLevel level, BlockPos center, long[] positionLongs) {
         if (positionLongs.length > 0) {
+            debugPaintPath("sync_removed_batch center={} {} {} packetCount={} radius={}", center.getX(), center.getY(), center.getZ(), positionLongs.length, NEARBY_SYNC_RADIUS);
             PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new RemovePaintedBlocksPayload(positionLongs));
+        }
+    }
+
+    private static void debugPaintPath(String message, Object... args) {
+        if (GunwoodCommonConfig.debugPaintingPath()) {
+            LOGGER.info("[Gunwood paint debug] " + message, args);
         }
     }
 }
