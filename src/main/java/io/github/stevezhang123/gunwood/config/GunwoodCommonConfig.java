@@ -30,6 +30,7 @@ public final class GunwoodCommonConfig {
     public static final ModConfigSpec.BooleanValue ENABLE_SABLE_SCHEMATIC_COMPAT;
     public static final ModConfigSpec.BooleanValue SKIP_LIGHT_REFRESH_IN_SABLE_PHYSICAL_BODIES;
     public static final ModConfigSpec.BooleanValue REQUIRE_BUILD_PERMISSION_FOR_BATCH_OPERATIONS;
+    public static final ModConfigSpec.BooleanValue DEBUG_PAINTING_PATH;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -222,6 +223,17 @@ public final class GunwoodCommonConfig {
                 .define("refreshLightOnPaintChange", true);
         builder.pop();
 
+        builder.push("debug");
+        DEBUG_PAINTING_PATH = builder
+                .comment(
+                        "是否输出喷刷/刮子链路调试日志。仅用于排查方块是否通过 canPaint、写入服务端数据、同步到客户端并请求 chunk rebuild，默认关闭。",
+                        "Whether to log spray/scrape path diagnostics. This is only for checking canPaint, server data writes, client sync, and chunk rebuild requests. Disabled by default.",
+                        "默认值：false",
+                        "Default: false"
+                )
+                .define("debugPaintingPath", false);
+        builder.pop();
+
         SPEC = builder.build();
     }
 
@@ -258,6 +270,10 @@ public final class GunwoodCommonConfig {
 
     public static boolean skipLightRefreshInSablePhysicalBodies() {
         return enableSableCompat() && safeGet(SKIP_LIGHT_REFRESH_IN_SABLE_PHYSICAL_BODIES, true);
+    }
+
+    public static boolean debugPaintingPath() {
+        return safeGet(DEBUG_PAINTING_PATH, false);
     }
 
     private static boolean safeGet(ModConfigSpec.BooleanValue value, boolean fallback) {

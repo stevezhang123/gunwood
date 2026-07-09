@@ -1,5 +1,6 @@
 package io.github.stevezhang123.gunwood.client;
 
+import com.mojang.logging.LogUtils;
 import io.github.stevezhang123.gunwood.compat.create.GunwoodFlywheelCompat;
 import io.github.stevezhang123.gunwood.compat.create.GunwoodCreateContraptionCompat;
 import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
@@ -20,10 +21,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
 
 public final class ClientPaintedBlockCache {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final LongSet PAINTED_BLOCKS = new LongOpenHashSet();
     private static final Long2ObjectMap<LongSet> PAINTED_BLOCKS_BY_CHUNK = new Long2ObjectOpenHashMap<>();
+    private static int skippedClientLightRefreshWarnings;
 
     private ClientPaintedBlockCache() {
     }
@@ -46,6 +50,7 @@ public final class ClientPaintedBlockCache {
         PAINTED_BLOCKS.clear();
         PAINTED_BLOCKS_BY_CHUNK.clear();
         newPositions.forEach((long pos) -> addToCache(pos));
+        debugPaintPath("client_cache_replace_all oldSize={} newSize={}", oldPositions.size(), PAINTED_BLOCKS.size());
 
         newPositions.forEach((long pos) -> {
             if (!oldPositions.contains(pos)) {
@@ -73,6 +78,7 @@ public final class ClientPaintedBlockCache {
         if (addToCache(pos)) {
             BlockPos blockPos = BlockPos.of(pos);
             markRenderDirty(pos);
+            debugPaintPath("client_cache_add pos={} {} {} contains={} cacheSize={} chunkRebuildRequested=true", blockPos.getX(), blockPos.getY(), blockPos.getZ(), contains(pos), PAINTED_BLOCKS.size());
             refreshFlywheelVisual(blockPos, true);
             refreshContraptionVisual(blockPos);
         }
@@ -100,6 +106,7 @@ public final class ClientPaintedBlockCache {
 
         if (!changedPositions.isEmpty()) {
             markRenderDirty(changedPositions);
+            debugPaintPath("client_cache_add_batch count={} cacheSize={} chunkRebuildRequested=true", changedPositions.size(), PAINTED_BLOCKS.size());
             changedPositions.forEach((long pos) -> refreshFlywheelVisual(BlockPos.of(pos), true));
             refreshContraptionVisuals(toBlockPosList(changedPositions));
         }
@@ -114,6 +121,7 @@ public final class ClientPaintedBlockCache {
             removeFromChunkIndex(pos);
             BlockPos blockPos = BlockPos.of(pos);
             markRenderDirty(pos);
+            debugPaintPath("client_cache_remove pos={} {} {} contains={} cacheSize={} chunkRebuildRequested=true", blockPos.getX(), blockPos.getY(), blockPos.getZ(), contains(pos), PAINTED_BLOCKS.size());
             refreshFlywheelVisual(blockPos, false);
             refreshContraptionVisual(blockPos);
         }
@@ -142,6 +150,7 @@ public final class ClientPaintedBlockCache {
 
         if (!changedPositions.isEmpty()) {
             markRenderDirty(changedPositions);
+            debugPaintPath("client_cache_remove_batch count={} cacheSize={} chunkRebuildRequested=true", changedPositions.size(), PAINTED_BLOCKS.size());
             changedPositions.forEach((long pos) -> refreshFlywheelVisual(BlockPos.of(pos), false));
             refreshContraptionVisuals(toBlockPosList(changedPositions));
         }
@@ -207,21 +216,8 @@ public final class ClientPaintedBlockCache {
 
     private static void markRenderDirty(long posLong) {
         BlockPos pos = BlockPos.of(posLong);
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level != null && GunwoodCommonConfig.refreshLightOnPaintChange()) {
-            updateSkyLightSources(posLong);
-            BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))
-                    .forEach(lightPos -> minecraft.level.getLightEngine().checkBlock(lightPos.immutable()));
-            minecraft.level.getLightEngine().runLightUpdates();
-        }
-
-        if (minecraft.levelRenderer != null) {
-            try {
-                minecraft.levelRenderer.setBlocksDirty(pos.getX() - 1, pos.getY() - 1, pos.getZ() - 1, pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
-            } catch (NullPointerException ignored) {
-                // The level renderer can outlive its view area briefly while leaving a world.
-            }
-        }
+        refreshClientLight(posLong);
+        markBlockRangeDirty(pos.getX() - 1, pos.getY() - 1, pos.getZ() - 1, pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
     }
 
     private static void markRenderDirty(Collection<BlockPos> positions) {
@@ -233,7 +229,6 @@ public final class ClientPaintedBlockCache {
     }
 
     private static void markRenderDirty(LongCollection positions) {
-        Minecraft minecraft = Minecraft.getInstance();
         if (positions.isEmpty()) {
             return;
         }
@@ -254,19 +249,22 @@ public final class ClientPaintedBlockCache {
             maxX = Math.max(maxX, pos.getX());
             maxY = Math.max(maxY, pos.getY());
             maxZ = Math.max(maxZ, pos.getZ());
-            updateSkyLightSources(posLong);
-            BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))
-                    .forEach(lightPos -> lightPositions.add(lightPos.asLong()));
+            if (GunwoodCommonConfig.refreshLightOnPaintChange()) {
+                lightPositions.add(posLong);
+                BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))
+                        .forEach(lightPos -> lightPositions.add(lightPos.asLong()));
+            }
         }
 
-        if (minecraft.level != null && GunwoodCommonConfig.refreshLightOnPaintChange()) {
-            lightPositions.forEach((long lightPos) -> minecraft.level.getLightEngine().checkBlock(BlockPos.of(lightPos)));
-            minecraft.level.getLightEngine().runLightUpdates();
-        }
+        refreshClientLight(lightPositions);
+        markBlockRangeDirty(minX - 1, minY - 1, minZ - 1, maxX + 1, maxY + 1, maxZ + 1);
+    }
 
+    private static void markBlockRangeDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.levelRenderer != null) {
             try {
-                minecraft.levelRenderer.setBlocksDirty(minX - 1, minY - 1, minZ - 1, maxX + 1, maxY + 1, maxZ + 1);
+                minecraft.levelRenderer.setBlocksDirty(minX, minY, minZ, maxX, maxY, maxZ);
             } catch (NullPointerException ignored) {
                 // The level renderer can outlive its view area briefly while leaving a world.
             }
@@ -285,6 +283,48 @@ public final class ClientPaintedBlockCache {
         return false;
     }
 
+    private static void refreshClientLight(long posLong) {
+        if (!GunwoodCommonConfig.refreshLightOnPaintChange()) {
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null) {
+            return;
+        }
+
+        try {
+            updateSkyLightSources(posLong);
+            BlockPos pos = BlockPos.of(posLong);
+            BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))
+                    .forEach(lightPos -> minecraft.level.getLightEngine().checkBlock(lightPos.immutable()));
+            minecraft.level.getLightEngine().runLightUpdates();
+        } catch (RuntimeException exception) {
+            warnSkippedClientLightRefresh(posLong, exception);
+        }
+    }
+
+    private static void refreshClientLight(LongCollection positions) {
+        if (positions.isEmpty() || !GunwoodCommonConfig.refreshLightOnPaintChange()) {
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null) {
+            return;
+        }
+
+        try {
+            positions.forEach((long lightPos) -> {
+                updateSkyLightSources(lightPos);
+                minecraft.level.getLightEngine().checkBlock(BlockPos.of(lightPos));
+            });
+            minecraft.level.getLightEngine().runLightUpdates();
+        } catch (RuntimeException exception) {
+            warnSkippedClientLightRefresh(positions.iterator().nextLong(), exception);
+        }
+    }
+
     private static void updateSkyLightSources(long posLong) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level != null) {
@@ -294,6 +334,22 @@ public final class ClientPaintedBlockCache {
             }
             LevelChunk chunk = minecraft.level.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
             chunk.getSkyLightSources().update(chunk, pos.getX() & 15, pos.getY(), pos.getZ() & 15);
+        }
+    }
+
+    private static void warnSkippedClientLightRefresh(long posLong, RuntimeException exception) {
+        if (skippedClientLightRefreshWarnings < 5) {
+            BlockPos pos = BlockPos.of(posLong);
+            LOGGER.warn(
+                    "Skipping Gunwood client light refresh at {} {} {} so the painted block render update can continue: {}",
+                    pos.getX(),
+                    pos.getY(),
+                    pos.getZ(),
+                    exception.toString()
+            );
+            skippedClientLightRefreshWarnings++;
+        } else {
+            LOGGER.debug("Skipping Gunwood client light refresh at packed position {}", posLong, exception);
         }
     }
 
@@ -312,6 +368,12 @@ public final class ClientPaintedBlockCache {
         List<BlockPos> blockPositions = new ArrayList<>(positions.size());
         positions.forEach((long pos) -> blockPositions.add(BlockPos.of(pos)));
         return blockPositions;
+    }
+
+    private static void debugPaintPath(String message, Object... args) {
+        if (GunwoodCommonConfig.debugPaintingPath()) {
+            LOGGER.info("[Gunwood paint debug] " + message, args);
+        }
     }
 
     private static void refreshFlywheelVisual(BlockPos pos, boolean painted) {

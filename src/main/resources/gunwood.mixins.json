@@ -16,6 +16,7 @@
     "client.ClientChunkSkyLightSourcesMixin",
     "client.ClientLightEngineMixin",
     "client.InvisibleGlassesHeadLayerMixin",
+    "client.SectionCompilerMixin",
     "client.BlockRenderDispatcherMixin",
     "client.VanillaBlockEntityRenderMixin",
     "client.CreateKineticBlockEntityRendererMixin",
