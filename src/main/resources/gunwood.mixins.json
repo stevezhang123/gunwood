@@ -3,6 +3,7 @@
   "minVersion": "0.8",
   "package": "io.github.stevezhang123.gunwood.mixin",
   "plugin": "io.github.stevezhang123.gunwood.mixin.GunwoodMixinPlugin",
+  "refmap": "gunwood.refmap.json",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "BlockStateBaseMixin",

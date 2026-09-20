@@ -13,7 +13,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Block.class)
 public abstract class BlockMixin {
-    @Inject(method = "shouldRenderFace", at = @At("HEAD"), cancellable = true)
+    @Inject(
+            method = "shouldRenderFace(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;)Z",
+            at = @At("HEAD"),
+            cancellable = true
+    )
     private static void gunwood$renderFaceBesideHiddenPaintedBlock(
             BlockState state,
             BlockGetter level,

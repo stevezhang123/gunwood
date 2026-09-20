@@ -27,6 +27,7 @@ Gunwood is now maintained on two Minecraft version branches:
 
 ### Fixed
 
+- Fixed a Forge 1.20.1 client startup crash caused by a missing Mixin refmap declaration for `Block.shouldRenderFace`.
 - Large water wheel operations now resolve from any structural edge block to the wheel center.
 - Painting and scraping a large water wheel updates all resolved wheel positions in one operation, consumes one tool use, and sends one batch sync.
 - Batch limits now preserve a water wheel as one logical target and do not leave a large wheel partially processed.
