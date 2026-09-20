@@ -1,39 +1,42 @@
 package io.github.stevezhang123.gunwood.config;
 
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class GunwoodCommonConfig {
     public static final int DEFAULT_SPRAYER_MAX_DAMAGE = 1024;
     public static final int DEFAULT_SCRAPER_MAX_DAMAGE = 1024;
 
-    public static final ModConfigSpec SPEC;
+    public static final ForgeConfigSpec SPEC;
 
-    public static final ModConfigSpec.IntValue SPRAYER_MAX_DAMAGE;
-    public static final ModConfigSpec.IntValue SCRAPER_MAX_DAMAGE;
-    public static final ModConfigSpec.IntValue SPRAYER_DAMAGE_PER_USE;
-    public static final ModConfigSpec.IntValue SCRAPER_DAMAGE_PER_USE;
-    public static final ModConfigSpec.DoubleValue SCRAPER_AIR_SCRAPE_RANGE;
-    public static final ModConfigSpec.BooleanValue USE_UNBREAKING_FOR_SPRAYER_AND_SCRAPER;
-    public static final ModConfigSpec.BooleanValue ALLOW_MENDING_ON_SPRAYER_AND_SCRAPER;
-    public static final ModConfigSpec.IntValue MAX_SELECTION_VOLUME;
-    public static final ModConfigSpec.IntValue MAX_BATCH_OPERATION_BLOCKS;
-    public static final ModConfigSpec.BooleanValue ALLOW_SELECTION_BATCH_PAINTING;
-    public static final ModConfigSpec.BooleanValue ALLOW_SELECTION_BATCH_SCRAPING;
-    public static final ModConfigSpec.BooleanValue ENABLE_FTB_ULTIMINE_COMPAT;
-    public static final ModConfigSpec.IntValue MAX_FTB_CHAIN_BLOCKS;
-    public static final ModConfigSpec.BooleanValue ENABLE_LIGHT_TRANSPARENCY;
-    public static final ModConfigSpec.BooleanValue REFRESH_LIGHT_ON_PAINT_CHANGE;
-    public static final ModConfigSpec.BooleanValue ENABLE_SODIUM_COMPAT;
-    public static final ModConfigSpec.BooleanValue ENABLE_CREATE_COMPAT;
-    public static final ModConfigSpec.BooleanValue ENABLE_CREATE_CONTRAPTION_COMPAT;
-    public static final ModConfigSpec.BooleanValue ENABLE_SABLE_COMPAT;
-    public static final ModConfigSpec.BooleanValue ENABLE_SABLE_SCHEMATIC_COMPAT;
-    public static final ModConfigSpec.BooleanValue SKIP_LIGHT_REFRESH_IN_SABLE_PHYSICAL_BODIES;
-    public static final ModConfigSpec.BooleanValue REQUIRE_BUILD_PERMISSION_FOR_BATCH_OPERATIONS;
-    public static final ModConfigSpec.BooleanValue DEBUG_PAINTING_PATH;
+    public static final ForgeConfigSpec.IntValue SPRAYER_MAX_DAMAGE;
+    public static final ForgeConfigSpec.IntValue SCRAPER_MAX_DAMAGE;
+    public static final ForgeConfigSpec.IntValue SPRAYER_DAMAGE_PER_USE;
+    public static final ForgeConfigSpec.IntValue SCRAPER_DAMAGE_PER_USE;
+    public static final ForgeConfigSpec.DoubleValue SCRAPER_AIR_SCRAPE_RANGE;
+    public static final ForgeConfigSpec.BooleanValue USE_UNBREAKING_FOR_SPRAYER_AND_SCRAPER;
+    public static final ForgeConfigSpec.BooleanValue ALLOW_MENDING_ON_SPRAYER_AND_SCRAPER;
+    public static final ForgeConfigSpec.IntValue MAX_SELECTION_VOLUME;
+    public static final ForgeConfigSpec.IntValue MAX_BATCH_OPERATION_BLOCKS;
+    public static final ForgeConfigSpec.BooleanValue ALLOW_SELECTION_BATCH_PAINTING;
+    public static final ForgeConfigSpec.BooleanValue ALLOW_SELECTION_BATCH_SCRAPING;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_FTB_ULTIMINE_COMPAT;
+    public static final ForgeConfigSpec.IntValue MAX_FTB_CHAIN_BLOCKS;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_LIGHT_TRANSPARENCY;
+    public static final ForgeConfigSpec.BooleanValue REFRESH_LIGHT_ON_PAINT_CHANGE;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_SODIUM_COMPAT;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_EMBEDDIUM_COMPAT;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_WHOLE_WATER_WHEEL_PAINTING;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_WHOLE_LARGE_WATER_WHEEL_PAINTING;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_CREATE_COMPAT;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_CREATE_CONTRAPTION_COMPAT;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_SABLE_COMPAT;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_SABLE_SCHEMATIC_COMPAT;
+    public static final ForgeConfigSpec.BooleanValue SKIP_LIGHT_REFRESH_IN_SABLE_PHYSICAL_BODIES;
+    public static final ForgeConfigSpec.BooleanValue REQUIRE_BUILD_PERMISSION_FOR_BATCH_OPERATIONS;
+    public static final ForgeConfigSpec.BooleanValue DEBUG_PAINTING_PATH;
 
     static {
-        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
+        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         builder.push("tools");
         SPRAYER_MAX_DAMAGE = builder
@@ -162,6 +165,15 @@ public final class GunwoodCommonConfig {
                         "Default: true"
                 )
                 .define("enableSodiumCompat", true);
+        ENABLE_EMBEDDIUM_COMPAT = builder
+                .comment("是否启用 Embeddium 区块网格隐藏兼容。", "Enable Embeddium chunk meshing compatibility.")
+                .define("enableEmbeddiumCompat", true);
+        ENABLE_WHOLE_WATER_WHEEL_PAINTING = builder
+                .comment("是否将普通水车作为整体喷刷和刮除。", "Paint and scrape a standard water wheel as one target.")
+                .define("enableWholeWaterWheelPainting", true);
+        ENABLE_WHOLE_LARGE_WATER_WHEEL_PAINTING = builder
+                .comment("是否将大型水车和其结构块作为整体喷刷和刮除。", "Paint and scrape a large water wheel and its structural blocks as one target.")
+                .define("enableWholeLargeWaterWheelPainting", true);
         ENABLE_CREATE_COMPAT = builder
                 .comment(
                         "是否启用 Create/Flywheel 动态渲染隐藏兼容。Mixin 加载仍可能需要重启游戏才能完全变化。",
@@ -276,7 +288,7 @@ public final class GunwoodCommonConfig {
         return safeGet(DEBUG_PAINTING_PATH, false);
     }
 
-    private static boolean safeGet(ModConfigSpec.BooleanValue value, boolean fallback) {
+    private static boolean safeGet(ForgeConfigSpec.BooleanValue value, boolean fallback) {
         try {
             return value.get();
         } catch (IllegalStateException exception) {

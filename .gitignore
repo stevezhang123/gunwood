@@ -113,6 +113,9 @@ gradle-app.setting
 
 # Common working directory
 run/
+run-forge-client/
+run-forge-server/
+run-forge-gametest/
 run/mods/
 runs/
 references/

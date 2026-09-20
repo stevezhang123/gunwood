@@ -4,11 +4,13 @@ import io.github.stevezhang123.gunwood.client.render.GunwoodClientRenderRules;
 import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@Pseudo
 @Mixin(targets = "dev.engine_room.flywheel.impl.visualization.storage.BlockEntityStorage", remap = false)
 public abstract class FlywheelBlockEntityStorageMixin {
     @Inject(

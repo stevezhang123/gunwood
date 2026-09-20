@@ -1,7 +1,6 @@
 package io.github.stevezhang123.gunwood.item;
 
 import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
-import net.minecraft.core.Holder;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -20,11 +19,6 @@ public final class GunwoodToolEnchantmentHelper {
     }
 
     private static boolean containsMending(ItemStack stack) {
-        for (Holder<Enchantment> enchantment : EnchantmentHelper.getEnchantmentsForCrafting(stack).keySet()) {
-            if (enchantment.is(Enchantments.MENDING)) {
-                return true;
-            }
-        }
-        return false;
+        return EnchantmentHelper.getEnchantments(stack).containsKey(Enchantments.MENDING);
     }
 }

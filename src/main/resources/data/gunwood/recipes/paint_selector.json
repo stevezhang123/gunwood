@@ -2,23 +2,20 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "key": {
-    "G": {
-      "item": "minecraft:gold_ingot"
-    },
-    "N": {
-      "item": "minecraft:iron_nugget"
+    "C": {
+      "item": "minecraft:calibrated_sculk_sensor"
     },
     "T": {
       "item": "minecraft:tinted_glass"
     }
   },
   "pattern": [
-    "GNG",
-    "TGT",
-    "GNG"
+    "TTT",
+    "TCT",
+    "TTT"
   ],
   "result": {
     "count": 1,
-    "id": "gunwood:glasses"
+    "item": "gunwood:paint_selector"
   }
 }

@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import io.github.stevezhang123.gunwood.network.ModNetworking;
 import io.github.stevezhang123.gunwood.config.GunwoodCommonConfig;
 import io.github.stevezhang123.gunwood.compat.ftbultimine.GunwoodFTBAirScrapeCompat;
+import io.github.stevezhang123.gunwood.compat.create.CreateWaterWheelCompat;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelection;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelectionManager;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -83,6 +84,10 @@ public final class GunwoodPaintActions {
     }
 
     public static int paintSingle(ServerPlayer player, ServerLevel level, BlockPos pos, ItemStack toolStack, InteractionHand hand) {
+        Optional<CreateWaterWheelCompat.WaterWheelTarget> wheel = CreateWaterWheelCompat.resolveWholeWheel(level, pos);
+        if (wheel.isPresent()) {
+            return paintMany(player, level, wheel.get().positions(), toolStack, hand);
+        }
         BlockState state = level.getBlockState(pos);
         boolean canPaint = GunwoodPaintRules.canPaint(level, pos, state, player);
         debugPaintPath(
@@ -121,6 +126,10 @@ public final class GunwoodPaintActions {
     }
 
     public static int scrapeSingle(ServerPlayer player, ServerLevel level, BlockPos pos, ItemStack toolStack, InteractionHand hand) {
+        Optional<CreateWaterWheelCompat.WaterWheelTarget> wheel = CreateWaterWheelCompat.resolveWholeWheel(level, pos);
+        if (wheel.isPresent()) {
+            return scrapeMany(player, level, wheel.get().positions(), toolStack, hand);
+        }
         BlockState state = level.getBlockState(pos);
         if (!GunwoodPaintRules.canScrape(level, pos, state, player)) {
             return 0;
@@ -150,11 +159,11 @@ public final class GunwoodPaintActions {
             player.sendSystemMessage(Component.translatable("message.gunwood.tool.no_durability"));
             return 0;
         }
-        changedPositions = limitBatchTargets(changedPositions);
+        changedPositions = limitBatchTargets(level, changedPositions);
 
         PaintedBlockManager.addAll(level, changedPositions);
         damageTool(player, toolStack, hand, damagePerUse);
-        ModNetworking.syncAddedToNearby(level, changedPositions.getFirst(), changedPositions);
+        ModNetworking.syncAddedToNearby(level, changedPositions.get(0), changedPositions);
         player.sendSystemMessage(Component.translatable("message.gunwood.selection.bulk_painted", changedPositions.size()));
         return changedPositions.size();
     }
@@ -171,11 +180,11 @@ public final class GunwoodPaintActions {
             player.sendSystemMessage(Component.translatable("message.gunwood.tool.no_durability"));
             return 0;
         }
-        changedPositions = limitBatchTargets(changedPositions);
+        changedPositions = limitBatchTargets(level, changedPositions);
 
         PaintedBlockManager.removeAll(level, changedPositions);
         damageTool(player, toolStack, hand, damagePerUse);
-        ModNetworking.syncRemovedToNearby(level, changedPositions.getFirst(), changedPositions);
+        ModNetworking.syncRemovedToNearby(level, changedPositions.get(0), changedPositions);
         player.sendSystemMessage(Component.translatable("message.gunwood.selection.bulk_scraped", changedPositions.size()));
         return changedPositions.size();
     }
@@ -191,11 +200,11 @@ public final class GunwoodPaintActions {
             player.sendSystemMessage(Component.translatable("message.gunwood.tool.no_durability"));
             return 0;
         }
-        changedPositions = limitBatchTargets(changedPositions);
+        changedPositions = limitBatchTargets(level, changedPositions);
 
         PaintedBlockManager.addAll(level, changedPositions);
         damageTool(player, toolStack, hand, damagePerUse);
-        ModNetworking.syncAddedToNearby(level, changedPositions.getFirst(), changedPositions);
+        ModNetworking.syncAddedToNearby(level, changedPositions.get(0), changedPositions);
         player.sendSystemMessage(Component.translatable("message.gunwood.selection.bulk_painted", changedPositions.size()));
         return changedPositions.size();
     }
@@ -215,10 +224,16 @@ public final class GunwoodPaintActions {
 
     private static List<BlockPos> collectPaintTargets(ServerPlayer player, ServerLevel level, Collection<BlockPos> positions) {
         List<BlockPos> changedPositions = new ArrayList<>();
+        LongSet visited = new LongOpenHashSet();
         for (BlockPos pos : positions) {
-            BlockState state = level.getBlockState(pos);
-            if (GunwoodPaintRules.canPaint(level, pos, state, player, GunwoodCommonConfig.REQUIRE_BUILD_PERMISSION_FOR_BATCH_OPERATIONS.get())) {
-                changedPositions.add(pos.immutable());
+            List<BlockPos> targets = CreateWaterWheelCompat.resolveWholeWheel(level, pos)
+                    .map(CreateWaterWheelCompat.WaterWheelTarget::positions).orElse(List.of(pos));
+            for (BlockPos target : targets) {
+                if (!visited.add(target.asLong())) continue;
+                BlockState state = level.getBlockState(target);
+                if (GunwoodPaintRules.canPaint(level, target, state, player, GunwoodCommonConfig.REQUIRE_BUILD_PERMISSION_FOR_BATCH_OPERATIONS.get())) {
+                    changedPositions.add(target.immutable());
+                }
             }
         }
         return changedPositions;
@@ -226,21 +241,45 @@ public final class GunwoodPaintActions {
 
     private static List<BlockPos> collectScrapeTargets(ServerPlayer player, ServerLevel level, Collection<BlockPos> positions) {
         List<BlockPos> changedPositions = new ArrayList<>();
+        LongSet visited = new LongOpenHashSet();
         for (BlockPos pos : positions) {
-            BlockState state = level.getBlockState(pos);
-            if (GunwoodPaintRules.canScrape(level, pos, state, player, GunwoodCommonConfig.REQUIRE_BUILD_PERMISSION_FOR_BATCH_OPERATIONS.get())) {
-                changedPositions.add(pos.immutable());
+            List<BlockPos> targets = CreateWaterWheelCompat.resolveWholeWheel(level, pos)
+                    .map(CreateWaterWheelCompat.WaterWheelTarget::positions).orElse(List.of(pos));
+            for (BlockPos target : targets) {
+                if (!visited.add(target.asLong())) continue;
+                BlockState state = level.getBlockState(target);
+                if (GunwoodPaintRules.canScrape(level, target, state, player, GunwoodCommonConfig.REQUIRE_BUILD_PERMISSION_FOR_BATCH_OPERATIONS.get())) {
+                    changedPositions.add(target.immutable());
+                }
             }
         }
         return changedPositions;
     }
 
-    private static List<BlockPos> limitBatchTargets(List<BlockPos> changedPositions) {
+    private static List<BlockPos> limitBatchTargets(ServerLevel level, List<BlockPos> changedPositions) {
         int limit = GunwoodCommonConfig.MAX_BATCH_OPERATION_BLOCKS.get();
         if (changedPositions.size() <= limit) {
             return changedPositions;
         }
-        return new ArrayList<>(changedPositions.subList(0, limit));
+        List<BlockPos> limited = new ArrayList<>(limit);
+        LongSet candidates = new LongOpenHashSet();
+        LongSet visited = new LongOpenHashSet();
+        for (BlockPos pos : changedPositions) candidates.add(pos.asLong());
+        for (BlockPos pos : changedPositions) {
+            if (!visited.add(pos.asLong())) continue;
+            List<BlockPos> wheel = CreateWaterWheelCompat.resolveWholeWheel(level, pos)
+                    .map(CreateWaterWheelCompat.WaterWheelTarget::positions).orElse(List.of(pos));
+            List<BlockPos> group = new ArrayList<>(wheel.size());
+            for (BlockPos part : wheel) {
+                visited.add(part.asLong());
+                if (candidates.contains(part.asLong())) group.add(part);
+            }
+            // A water wheel is one logical target, even when its nine positions exceed the configured batch limit.
+            if (limited.size() + group.size() <= limit || limited.isEmpty() && wheel.size() > limit) {
+                limited.addAll(group);
+            }
+        }
+        return limited;
     }
 
     private static Optional<BlockPos> findPaintedPositionInLookDirection(ServerPlayer player, ServerLevel level, double range) {
@@ -309,13 +348,13 @@ public final class GunwoodPaintActions {
         }
         if (toolStack.isDamageableItem()) {
             if (GunwoodCommonConfig.USE_UNBREAKING_FOR_SPRAYER_AND_SCRAPER.get()) {
-                toolStack.hurtAndBreak(count, player, LivingEntity.getSlotForHand(hand));
+                toolStack.hurtAndBreak(count, player, living -> living.broadcastBreakEvent(hand));
             } else {
                 int newDamage = toolStack.getDamageValue() + count;
                 if (newDamage >= toolStack.getMaxDamage()) {
                     Item brokenItem = toolStack.getItem();
                     toolStack.shrink(1);
-                    player.onEquippedItemBroken(brokenItem, LivingEntity.getSlotForHand(hand));
+                    player.broadcastBreakEvent(hand);
                 } else {
                     toolStack.setDamageValue(newDamage);
                 }

@@ -2,12 +2,14 @@ package io.github.stevezhang123.gunwood.mixin.client;
 
 import io.github.stevezhang123.gunwood.compat.create.GunwoodContraptionRenderRules;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.BitSet;
 
+@Pseudo
 @Mixin(targets = "com.simibubi.create.content.contraptions.render.ClientContraption", remap = false)
 public abstract class CreateClientContraptionMixin {
     @Inject(method = "getRenderedBlocks", at = @At("RETURN"), cancellable = true, require = 0)

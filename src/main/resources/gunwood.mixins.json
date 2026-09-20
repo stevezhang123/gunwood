@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "io.github.stevezhang123.gunwood.mixin",
   "plugin": "io.github.stevezhang123.gunwood.mixin.GunwoodMixinPlugin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_17",
   "mixins": [
     "BlockStateBaseMixin",
     "ChunkSkyLightSourcesMixin",
@@ -16,7 +16,7 @@
     "client.ClientChunkSkyLightSourcesMixin",
     "client.ClientLightEngineMixin",
     "client.InvisibleGlassesHeadLayerMixin",
-    "client.SectionCompilerMixin",
+    "client.VanillaChunkRebuildTaskMixin",
     "client.BlockRenderDispatcherMixin",
     "client.VanillaBlockEntityRenderMixin",
     "client.CreateKineticBlockEntityRendererMixin",
@@ -26,9 +26,9 @@
     "client.FlywheelBlockEntityStorageMixin",
     "client.FlywheelRebuildTaskMixin",
     "client.FlywheelVisualManagerImplMixin",
-    "client.sodium.SodiumLevelSliceAccessor",
-    "client.sodium.SodiumChunkBuilderMeshingTaskMixin",
-    "client.sodium.SodiumLightDataAccessMixin"
+    "client.embeddium.EmbeddiumWorldSliceAccessor",
+    "client.embeddium.EmbeddiumChunkBuilderMeshingTaskMixin",
+    "client.embeddium.EmbeddiumLightDataAccessMixin"
   ],
   "injectors": {
     "defaultRequire": 1
