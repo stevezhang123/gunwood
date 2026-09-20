@@ -106,10 +106,10 @@ public abstract class StructureTemplateMixin {
     ) {
         if (!GunwoodCommonConfig.enableSableSchematicCompat()
                 || !cir.getReturnValue()
-                || this.gunwood$paintedRelativePositions.length == 0
-                || !(serverLevel.getLevel() instanceof ServerLevel level)) {
+                || this.gunwood$paintedRelativePositions.length == 0) {
             return;
         }
+        ServerLevel level = serverLevel.getLevel();
 
         BoundingBox boundingBox = settings.getBoundingBox();
         LongArrayList worldPositions = new LongArrayList(this.gunwood$paintedRelativePositions.length);

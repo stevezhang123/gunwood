@@ -22,12 +22,12 @@ public class GunwoodMixinPlugin implements IMixinConfigPlugin {
             "io.github.stevezhang123.gunwood.mixin.client.CreateContraptionVisualMixin";
     private static final String CREATE_CONTRAPTION_ENTITY_RENDERER_MIXIN =
             "io.github.stevezhang123.gunwood.mixin.client.CreateContraptionEntityRendererMixin";
-    private static final String SODIUM_CHUNK_BUILDER_MESHING_TASK_MIXIN =
-            "io.github.stevezhang123.gunwood.mixin.client.sodium.SodiumChunkBuilderMeshingTaskMixin";
-    private static final String SODIUM_LEVEL_SLICE_ACCESSOR =
-            "io.github.stevezhang123.gunwood.mixin.client.sodium.SodiumLevelSliceAccessor";
-    private static final String SODIUM_LIGHT_DATA_ACCESS_MIXIN =
-            "io.github.stevezhang123.gunwood.mixin.client.sodium.SodiumLightDataAccessMixin";
+    private static final String EMBEDDIUM_CHUNK_BUILDER_MESHING_TASK_MIXIN =
+            "io.github.stevezhang123.gunwood.mixin.client.embeddium.EmbeddiumChunkBuilderMeshingTaskMixin";
+    private static final String EMBEDDIUM_WORLD_SLICE_ACCESSOR =
+            "io.github.stevezhang123.gunwood.mixin.client.embeddium.EmbeddiumWorldSliceAccessor";
+    private static final String EMBEDDIUM_LIGHT_DATA_ACCESS_MIXIN =
+            "io.github.stevezhang123.gunwood.mixin.client.embeddium.EmbeddiumLightDataAccessMixin";
     private static final String FLYWHEEL_BLOCK_ENTITY_STORAGE =
             "dev.engine_room.flywheel.impl.visualization.storage.BlockEntityStorage";
     private static final String FLYWHEEL_VISUAL_MANAGER_IMPL =
@@ -40,10 +40,10 @@ public class GunwoodMixinPlugin implements IMixinConfigPlugin {
             "com.simibubi.create.content.contraptions.render.ContraptionVisual";
     private static final String CREATE_CONTRAPTION_ENTITY_RENDERER =
             "com.simibubi.create.content.contraptions.render.ContraptionEntityRenderer";
-    private static final String SODIUM_CHUNK_BUILDER_MESHING_TASK =
-            "net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderMeshingTask";
-    private static final String SODIUM_LIGHT_DATA_ACCESS =
-            "net.caffeinemc.mods.sodium.client.model.light.data.LightDataAccess";
+    private static final String EMBEDDIUM_CHUNK_BUILDER_MESHING_TASK =
+            "me.jellysquid.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderMeshingTask";
+    private static final String EMBEDDIUM_LIGHT_DATA_ACCESS =
+            "me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess";
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -77,11 +77,11 @@ public class GunwoodMixinPlugin implements IMixinConfigPlugin {
         if (CREATE_CONTRAPTION_ENTITY_RENDERER_MIXIN.equals(mixinClassName)) {
             return isClassPresent(CREATE_CONTRAPTION_ENTITY_RENDERER);
         }
-        if (SODIUM_CHUNK_BUILDER_MESHING_TASK_MIXIN.equals(mixinClassName) || SODIUM_LEVEL_SLICE_ACCESSOR.equals(mixinClassName)) {
-            return isClassPresent(SODIUM_CHUNK_BUILDER_MESHING_TASK);
+        if (EMBEDDIUM_CHUNK_BUILDER_MESHING_TASK_MIXIN.equals(mixinClassName) || EMBEDDIUM_WORLD_SLICE_ACCESSOR.equals(mixinClassName)) {
+            return isClassPresent(EMBEDDIUM_CHUNK_BUILDER_MESHING_TASK);
         }
-        if (SODIUM_LIGHT_DATA_ACCESS_MIXIN.equals(mixinClassName)) {
-            return isClassPresent(SODIUM_LIGHT_DATA_ACCESS);
+        if (EMBEDDIUM_LIGHT_DATA_ACCESS_MIXIN.equals(mixinClassName)) {
+            return isClassPresent(EMBEDDIUM_LIGHT_DATA_ACCESS);
         }
 
         return true;

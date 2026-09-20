@@ -1,7 +1,6 @@
 package io.github.stevezhang123.gunwood.paint;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
@@ -31,12 +30,12 @@ public class PaintedBlockSavedData extends SavedData {
 
     public static PaintedBlockSavedData get(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(
-                new SavedData.Factory<>(PaintedBlockSavedData::new, PaintedBlockSavedData::load),
+                PaintedBlockSavedData::load, PaintedBlockSavedData::new,
                 DATA_NAME
         );
     }
 
-    public static PaintedBlockSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
+    public static PaintedBlockSavedData load(CompoundTag tag) {
         PaintedBlockSavedData data = new PaintedBlockSavedData();
         if (tag.contains(TAG_PAINTED_BLOCKS, TAG_LONG_ARRAY)) {
             Arrays.stream(tag.getLongArray(TAG_PAINTED_BLOCKS)).forEach(data.paintedBlocks::add);
@@ -53,7 +52,7 @@ public class PaintedBlockSavedData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+    public CompoundTag save(CompoundTag tag) {
         tag.putLongArray(TAG_PAINTED_BLOCKS, this.paintedBlocks.toLongArray());
         return tag;
     }

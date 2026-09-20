@@ -9,7 +9,6 @@ import io.github.stevezhang123.gunwood.paint.PaintedBlockSyncEvents;
 import io.github.stevezhang123.gunwood.registry.ModCreativeTabs;
 import io.github.stevezhang123.gunwood.registry.ModItems;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelectionEvents;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -17,22 +16,21 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredItem;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import org.slf4j.Logger;
 
 @Mod(Gunwood.MODID)
@@ -40,42 +38,33 @@ public class Gunwood {
     public static final String MODID = "gunwood";
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
+    public static final RegistryObject<Block> EXAMPLE_BLOCK = BLOCKS.register("example_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE)));
+    public static final RegistryObject<Item> EXAMPLE_BLOCK_ITEM = ITEMS.register("example_block", () -> new BlockItem(EXAMPLE_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> EXAMPLE_ITEM = ITEMS.register("example_item", () -> new Item(
+            new Item.Properties().food(new FoodProperties.Builder().alwaysEat().nutrition(1).saturationMod(2f).build())));
 
-    public static final DeferredBlock<Block> EXAMPLE_BLOCK = BLOCKS.registerSimpleBlock("example_block", BlockBehaviour.Properties.of().mapColor(MapColor.STONE));
-    public static final DeferredItem<BlockItem> EXAMPLE_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("example_block", EXAMPLE_BLOCK);
-    public static final DeferredItem<Item> EXAMPLE_ITEM = ITEMS.registerSimpleItem(
-            "example_item",
-            new Item.Properties().food(new FoodProperties.Builder().alwaysEdible().nutrition(1).saturationModifier(2f).build())
-    );
-
-    public Gunwood(IEventBus modEventBus, ModContainer modContainer) {
-        modEventBus.addListener(this::commonSetup);
-        modEventBus.addListener(this::addCreative);
-        modEventBus.addListener(ModNetworking::registerPayloadHandlers);
-
-        BLOCKS.register(modEventBus);
-        ITEMS.register(modEventBus);
-        ModItems.ITEMS.register(modEventBus);
-        ModCreativeTabs.CREATIVE_MODE_TABS.register(modEventBus);
-
-        NeoForge.EVENT_BUS.register(this);
-        NeoForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerLoggedIn);
-        NeoForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerChangedDimension);
-        NeoForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerLoggedOut);
-        NeoForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerRespawn);
-        NeoForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerChangedDimension);
+    public Gunwood() {
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        modBus.addListener(this::commonSetup);
+        modBus.addListener(this::addCreative);
+        BLOCKS.register(modBus);
+        ITEMS.register(modBus);
+        ModItems.ITEMS.register(modBus);
+        ModCreativeTabs.CREATIVE_MODE_TABS.register(modBus);
+        MinecraftForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerLoggedIn);
+        MinecraftForge.EVENT_BUS.addListener(PaintedBlockSyncEvents::onPlayerChangedDimension);
+        MinecraftForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerRespawn);
+        MinecraftForge.EVENT_BUS.addListener(GunwoodSelectionEvents::onPlayerChangedDimension);
         registerOptionalCompat("ftbultimine", "io.github.stevezhang123.gunwood.compat.ftbultimine.GunwoodFTBUltimineCompat");
-        modContainer.registerConfig(ModConfig.Type.COMMON, GunwoodCommonConfig.SPEC, "gunwood-common.toml");
-        modContainer.registerConfig(ModConfig.Type.CLIENT, GunwoodClientConfig.SPEC, "gunwood-client.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, GunwoodCommonConfig.SPEC, "gunwood-common.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, GunwoodClientConfig.SPEC, "gunwood-client.toml");
     }
 
     private static void registerOptionalCompat(String modId, String className) {
-        if (!ModList.get().isLoaded(modId)) {
-            return;
-        }
-
+        if (!ModList.get().isLoaded(modId)) return;
         try {
             Class.forName(className).getMethod("register").invoke(null);
         } catch (ReflectiveOperationException exception) {
@@ -83,27 +72,18 @@ public class Gunwood {
         }
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event) {
-        LOGGER.info("Gunwood common setup");
+    private void commonSetup(FMLCommonSetupEvent event) {
+        ModNetworking.register();
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
-            event.accept(EXAMPLE_BLOCK_ITEM);
-        }
+        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) event.accept(EXAMPLE_BLOCK_ITEM);
     }
 
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-        LOGGER.info("Gunwood server starting");
-    }
-
-    @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
-            LOGGER.info("Gunwood client setup");
-            LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
             event.enqueueWork(GunwoodCuriosClientCompat::registerInvisibleGlassesRenderer);
         }
     }

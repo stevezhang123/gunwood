@@ -50,6 +50,7 @@ public final class ClientPaintedBlockCache {
         PAINTED_BLOCKS.clear();
         PAINTED_BLOCKS_BY_CHUNK.clear();
         newPositions.forEach((long pos) -> addToCache(pos));
+        debugPaintPath("client_cache_replace_all oldSize={} newSize={}", oldPositions.size(), PAINTED_BLOCKS.size());
 
         newPositions.forEach((long pos) -> {
             if (!oldPositions.contains(pos)) {
@@ -77,6 +78,7 @@ public final class ClientPaintedBlockCache {
         if (addToCache(pos)) {
             BlockPos blockPos = BlockPos.of(pos);
             markRenderDirty(pos);
+            debugPaintPath("client_cache_add pos={} {} {} contains={} cacheSize={} chunkRebuildRequested=true", blockPos.getX(), blockPos.getY(), blockPos.getZ(), contains(pos), PAINTED_BLOCKS.size());
             refreshFlywheelVisual(blockPos, true);
             refreshContraptionVisual(blockPos);
         }
@@ -104,6 +106,7 @@ public final class ClientPaintedBlockCache {
 
         if (!changedPositions.isEmpty()) {
             markRenderDirty(changedPositions);
+            debugPaintPath("client_cache_add_batch count={} cacheSize={} chunkRebuildRequested=true", changedPositions.size(), PAINTED_BLOCKS.size());
             changedPositions.forEach((long pos) -> refreshFlywheelVisual(BlockPos.of(pos), true));
             refreshContraptionVisuals(toBlockPosList(changedPositions));
         }
@@ -118,6 +121,7 @@ public final class ClientPaintedBlockCache {
             removeFromChunkIndex(pos);
             BlockPos blockPos = BlockPos.of(pos);
             markRenderDirty(pos);
+            debugPaintPath("client_cache_remove pos={} {} {} contains={} cacheSize={} chunkRebuildRequested=true", blockPos.getX(), blockPos.getY(), blockPos.getZ(), contains(pos), PAINTED_BLOCKS.size());
             refreshFlywheelVisual(blockPos, false);
             refreshContraptionVisual(blockPos);
         }
@@ -146,6 +150,7 @@ public final class ClientPaintedBlockCache {
 
         if (!changedPositions.isEmpty()) {
             markRenderDirty(changedPositions);
+            debugPaintPath("client_cache_remove_batch count={} cacheSize={} chunkRebuildRequested=true", changedPositions.size(), PAINTED_BLOCKS.size());
             changedPositions.forEach((long pos) -> refreshFlywheelVisual(BlockPos.of(pos), false));
             refreshContraptionVisuals(toBlockPosList(changedPositions));
         }
@@ -363,6 +368,12 @@ public final class ClientPaintedBlockCache {
         List<BlockPos> blockPositions = new ArrayList<>(positions.size());
         positions.forEach((long pos) -> blockPositions.add(BlockPos.of(pos)));
         return blockPositions;
+    }
+
+    private static void debugPaintPath(String message, Object... args) {
+        if (GunwoodCommonConfig.debugPaintingPath()) {
+            LOGGER.info("[Gunwood paint debug] " + message, args);
+        }
     }
 
     private static void refreshFlywheelVisual(BlockPos pos, boolean painted) {

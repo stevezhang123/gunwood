@@ -2,23 +2,23 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "key": {
+    "C": {
+      "item": "minecraft:sculk_catalyst"
+    },
     "D": {
       "item": "minecraft:diamond"
-    },
-    "H": {
-      "item": "minecraft:sculk_shrieker"
     },
     "S": {
       "item": "minecraft:stick"
     }
   },
   "pattern": [
-    "DHD",
+    "DCD",
     " S ",
     " S "
   ],
   "result": {
     "count": 1,
-    "id": "gunwood:scraper"
+    "item": "gunwood:spray_brush"
   }
 }

@@ -39,8 +39,9 @@ public final class GunwoodCreateContraptionCompat {
             }
 
             Object contraption = invokeNoArgs(entity, "getContraption");
-            invokeNoArgs(contraption, "invalidateClientContraptionStructure");
-            invokeNoArgs(contraption, "invalidateClientContraptionChildren");
+            Object clientContraption = invokeNoArgs(contraption, "getOrCreateClientContraptionLazy");
+            invokeNoArgs(clientContraption, "invalidateStructure");
+            invokeNoArgs(clientContraption, "invalidateChildren");
         }
     }
 

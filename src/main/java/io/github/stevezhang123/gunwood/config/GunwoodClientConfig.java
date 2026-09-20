@@ -1,32 +1,32 @@
 package io.github.stevezhang123.gunwood.config;
 
 import com.mojang.logging.LogUtils;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.slf4j.Logger;
 
 public final class GunwoodClientConfig {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final ModConfigSpec SPEC;
+    public static final ForgeConfigSpec SPEC;
 
-    public static final ModConfigSpec.IntValue PAINTED_BLOCK_OVERLAY_RANGE;
-    public static final ModConfigSpec.IntValue MAX_PAINTED_BLOCK_OVERLAY_COUNT;
-    public static final ModConfigSpec.BooleanValue SHOW_PAINTED_BLOCKS_WHEN_HOLDING_SCRAPER;
-    public static final ModConfigSpec.BooleanValue SHOW_SELECTIONS_WHEN_HOLDING_SCRAPER;
-    public static final ModConfigSpec.BooleanValue SHOW_PAINTED_BLOCKS_WHEN_HOLDING_SELECTION_TOOL;
-    public static final ModConfigSpec.BooleanValue SHOW_SELECTIONS_WHEN_HOLDING_SELECTION_TOOL;
-    public static final ModConfigSpec.BooleanValue SHOW_PAINTED_BLOCKS_WHEN_WEARING_GOGGLES;
-    public static final ModConfigSpec.ConfigValue<String> PAINTED_BLOCK_OUTLINE_COLOR;
-    public static final ModConfigSpec.ConfigValue<String> SELECTION_OUTLINE_COLOR;
-    public static final ModConfigSpec.ConfigValue<String> SELECTION_FACE_HIGHLIGHT_COLOR;
-    public static final ModConfigSpec.ConfigValue<String> HOVERED_SELECTION_OUTLINE_COLOR;
-    public static final ModConfigSpec.DoubleValue OUTLINE_INFLATION;
-    public static final ModConfigSpec.DoubleValue SELECTION_LINE_WIDTH;
-    public static final ModConfigSpec.DoubleValue PAINTED_BLOCK_LINE_WIDTH;
-    public static final ModConfigSpec.BooleanValue ENABLE_ADVANCED_TOOLTIPS;
+    public static final ForgeConfigSpec.IntValue PAINTED_BLOCK_OVERLAY_RANGE;
+    public static final ForgeConfigSpec.IntValue MAX_PAINTED_BLOCK_OVERLAY_COUNT;
+    public static final ForgeConfigSpec.BooleanValue SHOW_PAINTED_BLOCKS_WHEN_HOLDING_SCRAPER;
+    public static final ForgeConfigSpec.BooleanValue SHOW_SELECTIONS_WHEN_HOLDING_SCRAPER;
+    public static final ForgeConfigSpec.BooleanValue SHOW_PAINTED_BLOCKS_WHEN_HOLDING_SELECTION_TOOL;
+    public static final ForgeConfigSpec.BooleanValue SHOW_SELECTIONS_WHEN_HOLDING_SELECTION_TOOL;
+    public static final ForgeConfigSpec.BooleanValue SHOW_PAINTED_BLOCKS_WHEN_WEARING_GOGGLES;
+    public static final ForgeConfigSpec.ConfigValue<String> PAINTED_BLOCK_OUTLINE_COLOR;
+    public static final ForgeConfigSpec.ConfigValue<String> SELECTION_OUTLINE_COLOR;
+    public static final ForgeConfigSpec.ConfigValue<String> SELECTION_FACE_HIGHLIGHT_COLOR;
+    public static final ForgeConfigSpec.ConfigValue<String> HOVERED_SELECTION_OUTLINE_COLOR;
+    public static final ForgeConfigSpec.DoubleValue OUTLINE_INFLATION;
+    public static final ForgeConfigSpec.DoubleValue SELECTION_LINE_WIDTH;
+    public static final ForgeConfigSpec.DoubleValue PAINTED_BLOCK_LINE_WIDTH;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_ADVANCED_TOOLTIPS;
 
     static {
-        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
+        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         builder.push("overlay");
         PAINTED_BLOCK_OVERLAY_RANGE = builder

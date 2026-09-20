@@ -2,10 +2,12 @@ package io.github.stevezhang123.gunwood.mixin.client;
 
 import io.github.stevezhang123.gunwood.compat.create.GunwoodContraptionRenderRules;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+@Pseudo
 @Mixin(targets = "com.simibubi.create.content.contraptions.render.ContraptionEntityRenderer", remap = false)
 public abstract class CreateContraptionEntityRendererMixin {
     @Redirect(

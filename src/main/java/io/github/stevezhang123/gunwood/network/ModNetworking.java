@@ -1,102 +1,111 @@
 package io.github.stevezhang123.gunwood.network;
 
-import io.github.stevezhang123.gunwood.client.ClientPaintedBlockCache;
-import io.github.stevezhang123.gunwood.network.payload.AddPaintedBlockPayload;
-import io.github.stevezhang123.gunwood.network.payload.AddPaintedBlocksPayload;
-import io.github.stevezhang123.gunwood.network.payload.RemovePaintedBlockPayload;
-import io.github.stevezhang123.gunwood.network.payload.RemovePaintedBlocksPayload;
-import io.github.stevezhang123.gunwood.network.payload.SetSelectionPayload;
-import io.github.stevezhang123.gunwood.network.payload.SyncPaintedBlocksPayload;
+import io.github.stevezhang123.gunwood.Gunwood;
+import io.github.stevezhang123.gunwood.network.payload.*;
 import io.github.stevezhang123.gunwood.paint.PaintedBlockManager;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelection;
 import io.github.stevezhang123.gunwood.selection.GunwoodSelectionManager;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.network.simple.SimpleChannel;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 public final class ModNetworking {
     private static final String VERSION = "1";
-    private static final double NEARBY_SYNC_RADIUS = 64.0D;
+    private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
+            new ResourceLocation(Gunwood.MODID, "main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
-    private ModNetworking() {
+    private ModNetworking() {}
+
+    public static void register() {
+        int id = 0;
+        CHANNEL.registerMessage(id++, SyncPaintedBlocksPayload.class,
+                (m, b) -> b.writeLongArray(m.positions()),
+                b -> new SyncPaintedBlocksPayload(b.readLongArray()), ModNetworking::handleClient,
+                java.util.Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, AddPaintedBlockPayload.class,
+                (m, b) -> b.writeLong(m.pos()),
+                b -> new AddPaintedBlockPayload(b.readLong()), ModNetworking::handleClient,
+                java.util.Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, AddPaintedBlocksPayload.class,
+                (m, b) -> b.writeLongArray(m.positions()),
+                b -> new AddPaintedBlocksPayload(b.readLongArray()), ModNetworking::handleClient,
+                java.util.Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, RemovePaintedBlockPayload.class,
+                (m, b) -> b.writeLong(m.pos()),
+                b -> new RemovePaintedBlockPayload(b.readLong()), ModNetworking::handleClient,
+                java.util.Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, RemovePaintedBlocksPayload.class,
+                (m, b) -> b.writeLongArray(m.positions()),
+                b -> new RemovePaintedBlocksPayload(b.readLongArray()), ModNetworking::handleClient,
+                java.util.Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id, SetSelectionPayload.class,
+                (m, b) -> { b.writeBlockPos(m.firstPos()); b.writeBlockPos(m.secondPos()); },
+                b -> new SetSelectionPayload(b.readBlockPos(), b.readBlockPos()), ModNetworking::handleSelection,
+                java.util.Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
-    public static void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar(VERSION);
-
-        registrar.playToClient(
-                SyncPaintedBlocksPayload.TYPE,
-                SyncPaintedBlocksPayload.STREAM_CODEC,
-                (payload, context) -> ClientPaintedBlockCache.replaceAll(payload.positions())
-        );
-        registrar.playToClient(
-                AddPaintedBlockPayload.TYPE,
-                AddPaintedBlockPayload.STREAM_CODEC,
-                (payload, context) -> ClientPaintedBlockCache.add(payload.pos())
-        );
-        registrar.playToClient(
-                AddPaintedBlocksPayload.TYPE,
-                AddPaintedBlocksPayload.STREAM_CODEC,
-                (payload, context) -> ClientPaintedBlockCache.addAll(payload.positions())
-        );
-        registrar.playToClient(
-                RemovePaintedBlockPayload.TYPE,
-                RemovePaintedBlockPayload.STREAM_CODEC,
-                (payload, context) -> ClientPaintedBlockCache.remove(payload.pos())
-        );
-        registrar.playToClient(
-                RemovePaintedBlocksPayload.TYPE,
-                RemovePaintedBlocksPayload.STREAM_CODEC,
-                (payload, context) -> ClientPaintedBlockCache.removeAll(payload.positions())
-        );
-        registrar.playToServer(
-                SetSelectionPayload.TYPE,
-                SetSelectionPayload.STREAM_CODEC,
-                (payload, context) -> {
-                    if (context.player() instanceof ServerPlayer player) {
-                        GunwoodSelectionManager.setSelection(player, new GunwoodSelection(payload.firstPos(), payload.secondPos()));
-                    }
-                }
-        );
+    private static <T> void handleClient(T packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> () -> ClientNetworkHandler.handle(packet)));
+        context.setPacketHandled(true);
     }
+
+    private static void handleSelection(SetSelectionPayload packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> {
+            ServerPlayer player = context.getSender();
+            if (player != null) GunwoodSelectionManager.setSelection(player,
+                    new GunwoodSelection(packet.firstPos(), packet.secondPos()));
+        });
+        context.setPacketHandled(true);
+    }
+
+    public static void sendSelection(SetSelectionPayload selection) { CHANNEL.sendToServer(selection); }
 
     public static void syncAllToPlayer(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
-        PacketDistributor.sendToPlayer(player, new SyncPaintedBlocksPayload(PaintedBlockManager.getAllLongArray(level)));
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new SyncPaintedBlocksPayload(PaintedBlockManager.getAllLongArray(player.serverLevel())));
+    }
+
+    private static void sendNear(ServerLevel level, BlockPos center, Object packet) {
+        CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(
+                center.getX(), center.getY(), center.getZ(), 64, level.dimension())), packet);
     }
 
     public static void syncAddedToNearby(ServerLevel level, BlockPos pos) {
-        PacketDistributor.sendToPlayersNear(level, null, pos.getX(), pos.getY(), pos.getZ(), NEARBY_SYNC_RADIUS, new AddPaintedBlockPayload(pos));
+        sendNear(level, pos, new AddPaintedBlockPayload(pos.asLong()));
     }
 
     public static void syncAddedToNearby(ServerLevel level, BlockPos center, Collection<BlockPos> positions) {
-        long[] positionLongs = positions.stream().mapToLong(BlockPos::asLong).toArray();
-        syncAddedToNearby(level, center, positionLongs);
+        syncAddedToNearby(level, center, positions.stream().mapToLong(BlockPos::asLong).toArray());
     }
 
-    public static void syncAddedToNearby(ServerLevel level, BlockPos center, long[] positionLongs) {
-        if (positionLongs.length > 0) {
-            PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new AddPaintedBlocksPayload(positionLongs));
-        }
+    public static void syncAddedToNearby(ServerLevel level, BlockPos center, long[] positions) {
+        if (positions.length > 0) sendNear(level, center, new AddPaintedBlocksPayload(positions));
     }
 
     public static void syncRemovedToNearby(ServerLevel level, BlockPos pos) {
-        PacketDistributor.sendToPlayersNear(level, null, pos.getX(), pos.getY(), pos.getZ(), NEARBY_SYNC_RADIUS, new RemovePaintedBlockPayload(pos));
+        sendNear(level, pos, new RemovePaintedBlockPayload(pos.asLong()));
     }
 
     public static void syncRemovedToNearby(ServerLevel level, BlockPos center, Collection<BlockPos> positions) {
-        long[] positionLongs = positions.stream().mapToLong(BlockPos::asLong).toArray();
-        syncRemovedToNearby(level, center, positionLongs);
+        syncRemovedToNearby(level, center, positions.stream().mapToLong(BlockPos::asLong).toArray());
     }
 
-    public static void syncRemovedToNearby(ServerLevel level, BlockPos center, long[] positionLongs) {
-        if (positionLongs.length > 0) {
-            PacketDistributor.sendToPlayersNear(level, null, center.getX(), center.getY(), center.getZ(), NEARBY_SYNC_RADIUS, new RemovePaintedBlocksPayload(positionLongs));
-        }
+    public static void syncRemovedToNearby(ServerLevel level, BlockPos center, long[] positions) {
+        if (positions.length > 0) sendNear(level, center, new RemovePaintedBlocksPayload(positions));
     }
 }

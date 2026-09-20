@@ -1,7 +1,7 @@
 package io.github.stevezhang123.gunwood.selection;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 
 public final class GunwoodSelectionEvents {
     private GunwoodSelectionEvents() {

@@ -17,13 +17,13 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import io.github.stevezhang123.gunwood.network.ModNetworking;
 
 import java.util.Optional;
 
@@ -52,7 +52,8 @@ public final class GunwoodClientSelectionEvents {
     }
 
     @SubscribeEvent
-    public static void onClientTick(ClientTickEvent.Post event) {
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.level == null) {
             GunwoodClientSelectionState.clear();
@@ -84,14 +85,14 @@ public final class GunwoodClientSelectionEvents {
             return;
         }
 
-        if (event.getScrollDeltaY() == 0.0D) {
+        if (event.getScrollDelta() == 0.0D) {
             return;
         }
 
-        int scrollAmount = event.getScrollDeltaY() > 0.0D ? 1 : -1;
+        int scrollAmount = event.getScrollDelta() > 0.0D ? 1 : -1;
         Optional<GunwoodSelection> adjusted = GunwoodClientSelectionState.adjustSelection(face.get(), scrollAmount, GunwoodSelectionManager.maxAdjustableSelectionVolume());
         if (adjusted.isPresent()) {
-            PacketDistributor.sendToServer(new SetSelectionPayload(adjusted.get()));
+            ModNetworking.sendSelection(new SetSelectionPayload(adjusted.get()));
             minecraft.player.displayClientMessage(Component.translatable("message.gunwood.selection.adjusted", adjusted.get().volume()), true);
         } else {
             minecraft.player.displayClientMessage(Component.translatable("message.gunwood.selection.adjust_blocked"), true);

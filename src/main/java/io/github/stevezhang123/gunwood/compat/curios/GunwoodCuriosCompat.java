@@ -3,7 +3,7 @@ package io.github.stevezhang123.gunwood.compat.curios;
 import io.github.stevezhang123.gunwood.registry.ModItems;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.fml.ModList;
+import net.minecraftforge.fml.ModList;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -39,7 +39,15 @@ public final class GunwoodCuriosCompat {
         Class<?> curiosApi = Class.forName(CURIOS_API_CLASS);
         Method getCuriosInventory = curiosApi.getMethod("getCuriosInventory", LivingEntity.class);
         Object result = getCuriosInventory.invoke(null, entity);
-        return result instanceof Optional<?> optional ? optional : Optional.empty();
+        if (result instanceof Optional<?> optional) {
+            return optional;
+        }
+        if (result == null) {
+            return Optional.empty();
+        }
+        // Curios 5.x returns Forge LazyOptional; resolve() converts it to java.util.Optional.
+        Object resolved = result.getClass().getMethod("resolve").invoke(result);
+        return resolved instanceof Optional<?> optional ? optional : Optional.empty();
     }
 
     private static boolean findFirstCurio(Object handler) throws ReflectiveOperationException {
